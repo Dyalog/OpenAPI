@@ -1,0 +1,76 @@
+:Class Client
+    ⍝ Eventually to be auto generated.
+
+    (⎕ML ⎕IO)←1
+
+
+    ∇ r←Version
+        ⍝ Return the current version
+        :Access public shared
+        r←'PetStore' '1.0.27' '2026-01-05'
+    ∇
+
+    :field public BaseURL
+    :field public Cookies
+    :field public Headers
+    :field public Timeout
+    :field public VerifySSL
+    :field public FollowRedirects
+    :field public shared HttpCommand←''
+    :field public Initialised←0
+
+    ∇ (rc msg)←Initialise
+      rc←¯1
+      :If Initialised
+          (rc msg)←0 'Already initialised'
+      :Else
+          :If ''≡HttpCommand
+              :If 0≠##.⎕NC'HttpCommand'      ⍝ HttpCommand found in the parent?
+                  HttpCommand←##.HttpCommand ⍝ use it
+              :Else
+                  :Trap 0
+                      ⎕SE.SALT.Load'HttpCommand' ⍝ otherwise load it
+                      :If 0>⊃HttpCommand.Upgrade ⍝ and upgrade it
+                          msg←'Unable to upgrade HttpCommand'
+                          →0
+                      :EndIf
+                  :Else
+                      msg←'Error loading HttpCommand: ',∊⍕⎕DMX.(EM Message)
+                  :EndTrap
+              :EndIf
+          :EndIf
+      :EndIf
+      :If 1=5 6(×2⊥×⍤-)2↑2⊃'.'⎕VFI 2⊃HttpCommand.Version
+          msg←'HttpCommand version 5.6 or later is required'
+      :Else
+          (rc msg)←0 'Initialised'
+          Initialised←1
+      :EndIf
+    ∇
+
+    ∇ make1 args
+        :Access public
+        :Implements constructor
+        →0⍴⍨0∊⍴args
+        ⍝ We will assume correct
+        ⍝ Args is a namespace
+        ⍝ BaseURL, Cookies, Headers, Timeout, VerifySSL, FollowRedirects
+        args←(baseURL: '' ⋄ cookies: () ⋄ headers: [()⋄()] ⋄ timeout: ⍬ ⋄ verifySSL: 1 ⋄ followRedirects: 0) ⎕ns args
+        BaseURL Cookies Headers Timeout VerifySSL FollowRedirects←args.(baseURL cookies headers timeout verifySSL followRedirects)
+        Initialise
+    ∇
+
+    ∇ r←request cArgs
+        :Access public
+        ⍝ cArgs is a NS that mostly contains HttpCommand args
+        cArgs.BaseURL←BaseURL
+        ⍝cArgs.Headers←Headers
+        cArgs.TranslateData←1
+        r←HttpCommand.Do cArgs
+    ∇
+
+
+
+    
+
+:EndClass

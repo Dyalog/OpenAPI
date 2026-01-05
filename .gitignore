@@ -3,6 +3,11 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# Holdens Testing
+pet-store/*
+!pet-store/PetStore-Client/
+
+
 # dotenv files
 .env
 
@@ -480,3 +485,5 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+
