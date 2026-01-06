@@ -42,10 +42,10 @@ dotnet run -- ../pet-store/openapi.json ./output
 
 ## Next Steps
 
-- Complete Scriban template implementation
-- Finalize Dyalog APL client generation
+- Test Implementation with [PetStore](https://petstore3.swagger.io/)
+- Investigate what other features are required
+- Validate models
 - Add comprehensive error handling
-- Implement template customization options
 - Add support for authentication schemes
 - Create test suite
 
@@ -53,4 +53,4 @@ dotnet run -- ../pet-store/openapi.json ./output
 
 This project will leverage Dyalog v20.0 features. Generated libraries will not support pre-v20.0 versions of Dyalog APL.  
 
-For now, only JSON data is supported for parsing. XML is planned.
+For now, only JSON data is supported for sending data TO the server. 
