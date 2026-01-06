@@ -85,10 +85,9 @@ public class CodeGeneratorService
                     var schema = jsonContent?.Schema;
                     if (schema != null)
                     {
-                        var reference = schema.GetType().GetProperty("Reference")?.GetValue(schema);
-                        if (reference != null)
+                        if (schema is OpenApiSchemaReference reference)
                         {
-                            var id = reference.GetType().GetProperty("Id")?.GetValue(reference) as string;
+                            var id = reference.Reference.Id;
                             if (!string.IsNullOrEmpty(id))
                             {
                                 context.RequestBodyType = ToCamelCase(id, firstUpper: true);
@@ -96,10 +95,9 @@ public class CodeGeneratorService
                         }
                         else if (schema.Type == JsonSchemaType.Array && schema.Items != null)
                         {
-                            var itemReference = schema.Items.GetType().GetProperty("Reference")?.GetValue(schema.Items);
-                            if (itemReference != null)
+                            if (schema.Items is OpenApiSchemaReference itemsReference)
                             {
-                                var id = itemReference.GetType().GetProperty("Id")?.GetValue(itemReference) as string;
+                                var id = itemsReference.Reference.Id;
                                 if (!string.IsNullOrEmpty(id))
                                 {
                                     context.RequestBodyType = ToCamelCase(id, firstUpper: true);
@@ -176,10 +174,7 @@ public class CodeGeneratorService
         {
             var schemaName = schema.Key;
             var schemaValue = schema.Value;
-            
-            
-            if (schemaName == "model") continue;
-            
+                        
             var context = CreateModelContext(schemaName, schemaValue);
             
             var output = await _templateService.RenderAsync(template, context);
@@ -261,10 +256,9 @@ public class CodeGeneratorService
         // Handle null or missing type
         if (schema.Type == null)
         {
-            var reference = schema.GetType().GetProperty("Reference")?.GetValue(schema);
-            if (reference != null)
+            if (schema is OpenApiSchemaReference schemaReference)
             {
-                var id = reference.GetType().GetProperty("Id")?.GetValue(reference) as string;
+                var id = schemaReference.Reference.Id;
                 if (!string.IsNullOrEmpty(id))
                 {
                     return ToCamelCase(id, firstUpper: true);
@@ -305,14 +299,16 @@ public class CodeGeneratorService
         for (int i = 0; i < parts.Count; i++)
         {
             var part = parts[i];
+            var firstChar = part[0];
+            var rest = part.Length > 1 ? part.Substring(1).ToLower() : string.Empty;
             if (i == 0)
             {
-                result.Append(firstUpper ? char.ToUpper(part[0]) + part.Substring(1).ToLower() 
-                                        : char.ToLower(part[0]) + part.Substring(1).ToLower());
+                result.Append(firstUpper ? char.ToUpper(firstChar) + rest
+                                        : char.ToLower(firstChar) + rest);
             }
             else
             {
-                result.Append(char.ToUpper(part[0]) + part.Substring(1).ToLower());
+                result.Append(char.ToUpper(firstChar) + rest);
             }
         }
         
