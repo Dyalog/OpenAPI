@@ -49,5 +49,6 @@
 
     ∇ b←isVarDefined varName;_
         :Trap 0 ⋄ _←⎕VGET varName ⋄ b←1 ⋄ :Else ⋄ b←0 ⋄ :EndTrap
+        ⍝ TODO This is messy. Surely there is a better way
     ∇
 :EndClass
