@@ -7,7 +7,7 @@
 pet-store/*
 #!pet-store/PetStore-Client/
 OpenAPIDyalog/output/*
-
+*.sln
 
 # dotenv files
 .env

@@ -78,6 +78,37 @@ public class CodeGeneratorService
                     Deprecated = operation.Deprecated
                 };
 
+                // Extract request body model name if present
+                if (operation.RequestBody?.Content != null)
+                {
+                    var jsonContent = operation.RequestBody.Content.Values.FirstOrDefault();
+                    var schema = jsonContent?.Schema;
+                    if (schema != null)
+                    {
+                        var reference = schema.GetType().GetProperty("Reference")?.GetValue(schema);
+                        if (reference != null)
+                        {
+                            var id = reference.GetType().GetProperty("Id")?.GetValue(reference) as string;
+                            if (!string.IsNullOrEmpty(id))
+                            {
+                                context.RequestBodyType = ToCamelCase(id, firstUpper: true);
+                            }
+                        }
+                        else if (schema.Type == JsonSchemaType.Array && schema.Items != null)
+                        {
+                            var itemReference = schema.Items.GetType().GetProperty("Reference")?.GetValue(schema.Items);
+                            if (itemReference != null)
+                            {
+                                var id = itemReference.GetType().GetProperty("Id")?.GetValue(itemReference) as string;
+                                if (!string.IsNullOrEmpty(id))
+                                {
+                                    context.RequestBodyType = ToCamelCase(id, firstUpper: true);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 var output = await _templateService.RenderAsync(template, context);
                 var outputPath = Path.Combine(tagDir, $"{operationId}.apln");
                 
@@ -122,5 +153,169 @@ public class CodeGeneratorService
         }
         
         return summary;
+    }
+
+    /// <summary>
+    /// Generates all model files from OpenAPI schemas.
+    /// </summary>
+    /// <param name="document">The OpenAPI document.</param>
+    public async Task GenerateModelsAsync(OpenApiDocument document)
+    {
+        if (document.Components?.Schemas == null || !document.Components.Schemas.Any())
+        {
+            Console.WriteLine("No schemas found in the OpenAPI document.");
+            return;
+        }
+
+        var template = await _templateService.LoadTemplateAsync("APLSource/models/model.aplc.scriban");
+        
+        var modelsDir = Path.Combine(_outputDirectory, "APLSource", "models");
+        Directory.CreateDirectory(modelsDir);
+
+        foreach (var schema in document.Components.Schemas)
+        {
+            var schemaName = schema.Key;
+            var schemaValue = schema.Value;
+            
+            
+            if (schemaName == "model") continue;
+            
+            var context = CreateModelContext(schemaName, schemaValue);
+            
+            var output = await _templateService.RenderAsync(template, context);
+            var outputPath = Path.Combine(modelsDir, $"{ToCamelCase(schemaName, firstUpper: true)}.aplc");
+            
+            await _templateService.SaveOutputAsync(output, outputPath);
+            Console.WriteLine($"  Generated: APLSource/models/{ToCamelCase(schemaName, firstUpper: true)}.aplc");
+        }
+    }
+
+    /// <summary>
+    /// Creates a model template context from an OpenAPI schema.
+    /// </summary>
+    private ModelTemplateContext CreateModelContext(string schemaName, IOpenApiSchema schema)
+    {
+        var context = new ModelTemplateContext
+        {
+            ClassName = ToCamelCase(schemaName, firstUpper: true),
+            Description = schema.Description,
+        };
+
+        if (schema.Properties != null)
+        {
+            foreach (var property in schema.Properties)
+            {
+                var propName = property.Key;
+                var propSchema = property.Value;
+                
+                var modelProp = new ModelProperty
+                {
+                    ApiName = propName,
+                    DyalogName = ToCamelCase(propName, firstUpper: false),
+                    Type = MapSchemaTypeToAplType(propSchema),
+                    IsRequired = schema.Required?.Contains(propName) ?? false,
+                    Description = propSchema.Description,
+                    IsArray = propSchema.Type == JsonSchemaType.Array
+                };
+
+                // Check for reference
+                if (propSchema is OpenApiSchemaReference schemaReference)
+                {
+                    // Cast to OpenApiSchemaReference to get the Reference property
+                    var id = schemaReference.Reference.Id;
+                    if (!string.IsNullOrEmpty(id))
+                    {
+                        modelProp.IsReference = true;
+                        modelProp.ReferenceType = ToCamelCase(id, firstUpper: true);
+                    }
+                }
+                else if (propSchema.Type == JsonSchemaType.Array && propSchema.Items != null)
+                {
+                    if (propSchema.Items is OpenApiSchemaReference itemsReference)
+                    {
+                        var id = itemsReference.Reference.Id;
+                        if (!string.IsNullOrEmpty(id))
+                        {
+                            modelProp.IsReference = true;
+                            modelProp.ReferenceType = ToCamelCase(id, firstUpper: true);
+                        }
+                    }
+                }
+                else
+                {
+                    modelProp.IsReference = false;
+                }
+
+                context.Properties.Add(modelProp);
+            }
+        }
+
+        return context;
+    }
+
+    /// <summary>
+    /// Maps OpenAPI schema types to APL-friendly type names.
+    /// </summary>
+    private string MapSchemaTypeToAplType(IOpenApiSchema schema)
+    {
+        // Handle null or missing type
+        if (schema.Type == null)
+        {
+            var reference = schema.GetType().GetProperty("Reference")?.GetValue(schema);
+            if (reference != null)
+            {
+                var id = reference.GetType().GetProperty("Id")?.GetValue(reference) as string;
+                if (!string.IsNullOrEmpty(id))
+                {
+                    return ToCamelCase(id, firstUpper: true);
+                }
+            }
+            return "any";
+        }
+
+        return schema.Type switch
+        {
+            JsonSchemaType.String => "str",
+            JsonSchemaType.Integer => "int",
+            JsonSchemaType.Number => "number",
+            JsonSchemaType.Boolean => "bool",
+            JsonSchemaType.Array => schema.Items != null ? $"array[{MapSchemaTypeToAplType(schema.Items)}]" : "array",
+            JsonSchemaType.Object => "namespace",
+            _ => "any"
+        };
+    }
+
+    /// <summary>
+    /// Converts a string to camelCase or PascalCase.
+    /// </summary>
+    private string ToCamelCase(string text, bool firstUpper = false)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        
+        // Split on underscores, hyphens, and capital letters
+        var parts = System.Text.RegularExpressions.Regex
+            .Split(text, @"[-_]|(?=[A-Z])")
+            .Where(s => !string.IsNullOrEmpty(s))
+            .ToList();
+        
+        if (!parts.Any()) return text;
+
+        var result = new System.Text.StringBuilder();
+        
+        for (int i = 0; i < parts.Count; i++)
+        {
+            var part = parts[i];
+            if (i == 0)
+            {
+                result.Append(firstUpper ? char.ToUpper(part[0]) + part.Substring(1).ToLower() 
+                                        : char.ToLower(part[0]) + part.Substring(1).ToLower());
+            }
+            else
+            {
+                result.Append(char.ToUpper(part[0]) + part.Substring(1).ToLower());
+            }
+        }
+        
+        return result.ToString();
     }
 }

@@ -1,5 +1,4 @@
-﻿
-using OpenAPIDyalog.Models;
+﻿using OpenAPIDyalog.Models;
 using OpenAPIDyalog.Services;
 
 // Parse command line arguments
@@ -97,7 +96,7 @@ if (result.Document != null)
             };
 
             // Generate main client files from templates
-            foreach (var templateName in availableTemplates.Where(t => !t.Contains("endpoint")))
+            foreach (var templateName in availableTemplates.Where(t => !t.Contains("endpoint") && !t.Contains("models/model.aplc.scriban")))
             {
                 Console.Write($"Rendering {templateName}... ");
                 
@@ -138,6 +137,11 @@ if (result.Document != null)
             Console.WriteLine();
 
             await codeGenerator.GenerateEndpointsAsync(result.Document, options.Namespace);
+
+            // Generate models
+            Console.WriteLine();
+            Console.WriteLine("Generating models...");
+            await codeGenerator.GenerateModelsAsync(result.Document);
 
             Console.WriteLine();
             Console.WriteLine("Code generation complete!");
