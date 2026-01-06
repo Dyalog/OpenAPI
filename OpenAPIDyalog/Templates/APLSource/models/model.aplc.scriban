@@ -1,0 +1,53 @@
+:Class {{ class_name }}
+    {{~ if description ~}}
+    {{ comment_lines description }}
+    {{~ end ~}}
+    {{~ for prop in properties ~}}
+    ⍝ {{ prop.api_name }}: {{ prop.type }}{{ if prop.is_reference }}, REFERENCE{{ end }}{{ if prop.is_required }}, required{{ else }}, optional{{ end }}
+    {{~ end ~}}
+
+    {{~ for prop in properties ~}}
+    :field public {{ prop.dyalog_name }} ⍝ {{ prop.type }}
+    {{~ end ~}}
+
+    ∇ make1 args
+        :Access public
+        :Implements constructor
+        →0⍴⍨0∊⍴args
+        ⍝ We will assume correct
+        ⍝ Args is a namespace
+        {{~ for prop in properties ~}}
+        :If (0≠args.⎕NC'{{ prop.dyalog_name }}') 
+            {{ prop.dyalog_name }}←args.{{ prop.dyalog_name }} 
+        :EndIf
+
+        {{~ end ~}}
+    ∇
+
+    ∇  build←FormatNS;build
+        :Access public
+        build←()
+        {{~ for prop in properties ~}}
+        :If (isVarDefined '{{ prop.dyalog_name }}') 
+            {{~ if prop.is_reference ~}}
+            ⍝REFERENCE
+            {{~ if prop.is_array ~}}
+            ⍝ARRAY
+            ⍝ Check if array is empty
+            :If 0∊⍴{{ prop.dyalog_name }}
+            build.{{ prop.dyalog_name }}←⍬
+            :Else
+            {{~ end ~}}
+            build.{{ prop.dyalog_name }}←{{ prop.dyalog_name }}.FormatNS
+            {{ if prop.is_array }}:EndIf {{ end }}
+            {{~ else ~}}
+            build.{{ prop.dyalog_name }}←{{ prop.dyalog_name }} 
+            {{~ end ~}}
+        :EndIf
+        {{~ end ~}}
+    ∇
+
+    ∇ b←isVarDefined varName;_
+        :Trap 0 ⋄ _←⎕VGET varName ⋄ b←1 ⋄ :Else ⋄ b←0 ⋄ :EndTrap
+    ∇
+:EndClass

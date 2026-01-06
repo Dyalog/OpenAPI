@@ -48,6 +48,11 @@ public class OperationTemplateContext
     public IOpenApiRequestBody? RequestBody { get; set; }
 
     /// <summary>
+    /// The name of the model for the request body, if any.
+    /// </summary>
+    public string? RequestBodyType { get; set; }
+
+    /// <summary>
     /// Responses for this operation.
     /// </summary>
     public Dictionary<string, IOpenApiResponse> Responses { get; set; } = new();

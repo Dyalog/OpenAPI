@@ -52,3 +52,5 @@ dotnet run -- ../pet-store/openapi.json ./output
 ## Notes
 
 This project will leverage Dyalog v20.0 features. Generated libraries will not support pre-v20.0 versions of Dyalog APL.  
+
+For now, only JSON data is supported for parsing. XML is planned.

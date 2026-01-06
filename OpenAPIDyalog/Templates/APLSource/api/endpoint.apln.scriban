@@ -6,24 +6,35 @@
     {{~ if description ~}}
     {{ comment_lines description }}
     {{~ end ~}}
+    {{~ if parameters.size > 0 ~}}
+    
+    ⍝ Parameters:
+    {{~ for param in parameters ~}}
+    ⍝ {{ param.name }}: {{ param.schema.type ?? "any" }}{{ if param.required }}, required{{ else }}, optional{{ end }}
+    {{~ end ~}}
+    {{~ end ~}}
+    {{~ if request_body_type ~}}
+        
+    ⍝ Body: ⎕NEW models.{{ request_body_type }}
+    {{~ end ~}}
     
     ∇ r←parseArgs args;params
-        {{~ if parameters.size > 0 ~}}
-        {{~ for param in parameters ~}}
-        ⍝ {{ param.name }}: {{ param.schema.type ?? "any" }}{{ if param.required }}, required{{ else }}, optional{{ end }}
-        {{~ end ~}}
-        {{~ end ~}}
         params←⎕ns ''
         
         {{~ for param in parameters ~}}
         {{~ if param.in == "query" ~}}
         :If (2=args.⎕NC'{{ param.name }}') 
-        :If (0=10|⎕DR args.{{ param.name }})
             params.{{ param.name }}←args.{{ param.name }} 
-        :EndIf 
         :EndIf
-
         {{~ end ~}}
+        {{~ end ~}}
+        
+        ⍝ If we have a body, take the body from the args
+        ⍝ Note that the body will be a model class
+        {{~ if request_body_type ~}}
+        {{ if !request_body.required }}:If (0≠args.⎕NC'{{ request_body_type }}'){{ end }} 
+        params ⎕NS args.{{ request_body_type }}.FormatNS
+        {{ if !request_body.required }}:EndIf{{ end }}
         {{~ end ~}}
         
         ⍝ TODO: Required args should be managed...
@@ -39,10 +50,11 @@
     ∇ r←parseResponse response
         {{~ if responses ~}}
         {{~ for response_item in responses ~}}
-
+        {{~ if response_item.key != "default" ~}}
         :If response.HttpStatus={{ response_item.key }}
             r←response.Data ⍝ HttpCommand will parse JSON for us
         :EndIf
+        {{~ end ~}}
         {{~ end ~}}
         {{~ end ~}}
 
@@ -62,6 +74,9 @@
         ⍝ Args is a ns
         ⍝ (
         ⍝   client: Client (required)
+        {{~ if request_body_type ~}}
+        ⍝   {{ request_body_type }}: {{ request_body_type }} (required)
+        {{~ end ~}}
         {{~ for param in parameters ~}}
         ⍝   {{ param.name }}: {{ param.schema.type ?? "any" }} ({{ if param.required }}required{{ else }}not required{{ end }})
         {{~ end ~}}
