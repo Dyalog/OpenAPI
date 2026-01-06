@@ -5,7 +5,8 @@
 
 # Holdens Testing
 pet-store/*
-!pet-store/PetStore-Client/
+#!pet-store/PetStore-Client/
+OpenAPIDyalog/output/*
 
 
 # dotenv files

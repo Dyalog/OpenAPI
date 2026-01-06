@@ -1,5 +1,12 @@
 :Class Client
-    ⍝ Eventually to be auto generated.
+    ⍝ Generated on {{ generated_at | date.to_string "%Y-%m-%d %H:%M:%S" }} UTC
+    ⍝ {{ title }} - Version {{ version }}
+    {{~ if description ~}}
+    {{ comment_lines description }}
+    {{~ end ~}}
+    {{~ if base_url ~}}
+    ⍝ Base URL: {{ base_url }}
+    {{~ end ~}}
 
     (⎕ML ⎕IO)←1
 
@@ -7,7 +14,7 @@
     ∇ r←Version
         ⍝ Return the current version
         :Access public shared
-        r←'PetStore' '1.0.27' '2026-01-05'
+        r←'{{ title }}' '{{ version }}' '{{ generated_at | date.to_string "%Y-%m-%d" }}'
     ∇
 
     :field public BaseURL

@@ -1,0 +1,84 @@
+:Namespace {{ operation_id }}
+    ⍝ {{ method | string.upcase }}: {{ path }}
+    {{~ if summary ~}}
+    ⍝ {{ summary }}
+    {{~ end ~}}
+    {{~ if description ~}}
+    {{ comment_lines description }}
+    {{~ end ~}}
+    
+    ∇ r←parseArgs args;params
+        {{~ if parameters.size > 0 ~}}
+        {{~ for param in parameters ~}}
+        ⍝ {{ param.name }}: {{ param.schema.type ?? "any" }}{{ if param.required }}, required{{ else }}, optional{{ end }}
+        {{~ end ~}}
+        {{~ end ~}}
+        params←⎕ns ''
+        
+        {{~ for param in parameters ~}}
+        {{~ if param.in == "query" ~}}
+        :If (2=args.⎕NC'{{ param.name }}') 
+        :If (0=10|⎕DR args.{{ param.name }})
+            params.{{ param.name }}←args.{{ param.name }} 
+        :EndIf 
+        :EndIf
+
+        {{~ end ~}}
+        {{~ end ~}}
+        
+        ⍝ TODO: Required args should be managed...
+
+        r←( ⍝ Basically HttpCommand args in a nutshell
+            Command: '{{ method }}'
+            URL: '{{ path }}'
+            ContentType: 'application/json' ⍝ For now....
+            Params: params
+        )
+    ∇ 
+
+    ∇ r←parseResponse response
+        {{~ if responses ~}}
+        {{~ for response_item in responses ~}}
+
+        :If response.HttpStatus={{ response_item.key }}
+            r←response.Data ⍝ HttpCommand will parse JSON for us
+        :EndIf
+        {{~ end ~}}
+        {{~ end ~}}
+
+        r←()
+    ∇
+
+    ∇ r←buildResponse response
+        r←(
+            statusCode: response.HttpStatus
+            content: response.Data
+            headers: response.Headers
+            parsed: parseResponse response
+        )
+    ∇
+
+    ∇ r←syncDetailed args;client;cArgs;response
+        ⍝ Args is a ns
+        ⍝ (
+        ⍝   client: Client (required)
+        {{~ for param in parameters ~}}
+        ⍝   {{ param.name }}: {{ param.schema.type ?? "any" }} ({{ if param.required }}required{{ else }}not required{{ end }})
+        {{~ end ~}}
+        ⍝ )
+        ⍝ This is a {{ method | string.upcase }} command
+        :If 0=args.⎕NC'client'
+            ⍝ No Client oops
+            ÷0   
+        :EndIf
+        client←args.client
+        cArgs←parseArgs args ⍝ Create client args
+
+        response←client.request cArgs
+        r←buildResponse response
+    ∇
+
+    ∇ r←sync args
+        r←(syncDetailed args).parsed
+    ∇
+:EndNamespace
