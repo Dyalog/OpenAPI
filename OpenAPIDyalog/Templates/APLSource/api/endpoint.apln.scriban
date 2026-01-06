@@ -33,7 +33,7 @@
         ⍝ Note that the body will be a model class
         {{~ if request_body_type ~}}
         {{ if !request_body.required }}:If (0≠args.⎕NC'{{ request_body_type }}'){{ end }} 
-        params ⎕NS args.{{ request_body_type }}.FormatNS
+        params←params ⎕NS args.{{ request_body_type }}.FormatNS
         {{ if !request_body.required }}:EndIf{{ end }}
         {{~ end ~}}
         
@@ -53,11 +53,13 @@
         {{~ if response_item.key != "default" ~}}
         :If response.HttpStatus={{ response_item.key }}
             r←response.Data ⍝ HttpCommand will parse JSON for us
+            →0
         :EndIf
         {{~ end ~}}
         {{~ end ~}}
         {{~ end ~}}
 
+        ⍝ Default to nothing
         r←()
     ∇
 
