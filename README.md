@@ -1,4 +1,4 @@
-# OpenAPI Dyalog APL Generator
+# Dyalog APL OpenAPI Client Generator
 
 A C# application for parsing OpenAPI specifications and generating Dyalog APL client code.
 
