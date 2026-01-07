@@ -10,18 +10,11 @@
     :field public {{ prop.dyalog_name }} ⍝ {{ prop.type }}
     {{~ end ~}}
 
-    ∇ make1 args
+    ∇ make1 args;names
         :Access public
         :Implements constructor
-        →0⍴⍨0∊⍴args
         ⍝ We will assume correct
-        ⍝ Args is a namespace
-        {{~ for prop in properties ~}}
-        :If (0≠args.⎕NC'{{ prop.dyalog_name }}') 
-            {{ prop.dyalog_name }}←args.{{ prop.dyalog_name }} 
-        :EndIf
-
-        {{~ end ~}}
+        ⎕THIS ⎕NS args ⍝ Copy args into ⎕THIS
     ∇
 
     ∇  build←FormatNS;build
@@ -35,15 +28,18 @@
             ⍝ARRAY
             ⍝ Check if array is empty
             :If 0∊⍴{{ prop.dyalog_name }}
-            build.{{ prop.dyalog_name }}←⍬
+                build.{{ prop.api_name }}←⍬
             :Else
-            {{~ end ~}}
-            build.{{ prop.dyalog_name }}←{{ prop.dyalog_name }}.FormatNS
-            {{ if prop.is_array }}:EndIf {{ end }}
+                build.{{ prop.api_name }}←{{ prop.dyalog_name }}.FormatNS
+            :EndIf 
             {{~ else ~}}
-            build.{{ prop.dyalog_name }}←{{ prop.dyalog_name }} 
+                build.{{ prop.api_name }}←{{ prop.dyalog_name }}.FormatNS
+            {{~ end ~}}
+            {{~ else ~}}
+            build.{{ prop.api_name }}←{{ prop.dyalog_name }} 
             {{~ end ~}}
         :EndIf
+
         {{~ end ~}}
     ∇
 
