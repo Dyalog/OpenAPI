@@ -21,6 +21,11 @@ public class OperationTemplateContext
     /// The path/route for this operation.
     /// </summary>
     public string Path { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// The APL expression for the path for this operation.
+    /// </summary>
+    public string DyalogPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Operation summary.

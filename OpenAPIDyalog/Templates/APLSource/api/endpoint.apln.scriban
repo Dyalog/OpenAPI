@@ -10,7 +10,7 @@
     
     ⍝ Parameters:
     {{~ for param in parameters ~}}
-    ⍝ {{ param.name }}: {{ param.schema.type ?? "any" }}{{ if param.required }}, required{{ else }}, optional{{ end }}
+    ⍝ {{ param.name }}: {{ param.schema.type ?? "any" }}{{ if param.required }}, required{{ else }}, optional{{ end }}, {{ param.in }}
     {{~ end ~}}
     {{~ end ~}}
     {{~ if request_body_type ~}}
@@ -22,17 +22,23 @@
         params←⎕ns ''
         
         {{~ for param in parameters ~}}
-        {{~ if param.in == "query" ~}}
-        :If (2=args.⎕NC'{{ param.name }}') 
+        {{~ if param.in == "Query" ~}}
+        ⍝ Query param
+        :If (2=args.⎕NC'{{ param.name }}')
             params.{{ param.name }}←args.{{ param.name }} 
         :EndIf
         {{~ end ~}}
+        {{~ if param.in == "Path" ~}}
+        ⍝ Path Param
+        :If 2≠args.⎕NC'{{ param.name }}'⋄'{{ param.name }} is required' ⎕SIGNAL 0 ⋄ :EndIf
+        :If ~((1=≢∘⍴)∧0=10|⎕DR)args.{{ param.name }}⋄'{{ param.name }} should be a character vector' ⎕SIGNAL 0 ⋄ :EndIf
+        {{~ end ~}}
         {{~ end ~}}
         
+        {{~ if request_body_type ~}}
         ⍝ If we have a body, take the body from the args
         ⍝ Note that the body will be a model class
-        {{~ if request_body_type ~}}
-        {{ if !request_body.required }}:If (0≠args.⎕NC'{{ request_body_type }}'){{ end }} 
+        {{ if !request_body.required }}:If (0≠args.⎕NC'{{ request_body_type }}'){{ else }}:If 0=args.⎕NC'{{ request_body_type }}'⋄'{{ request_body_type }} is required' ⎕SIGNAL 0 ⋄ :EndIf{{ end }} 
         params←params ⎕NS args.{{ request_body_type }}.FormatNS
         {{ if !request_body.required }}:EndIf{{ end }}
         {{~ end ~}}
@@ -41,7 +47,7 @@
 
         r←( ⍝ Basically HttpCommand args in a nutshell
             Command: '{{ method }}'
-            URL: '{{ path }}'
+            URL: {{ dyalog_path }}
             ContentType: 'application/json' ⍝ For now....
             Params: params
         )
@@ -86,7 +92,7 @@
         ⍝ This is a {{ method | string.upcase }} command
         :If 0=args.⎕NC'client'
             ⍝ No Client oops
-            ÷0   
+            'client is required' ⎕SIGNAL 0   
         :EndIf
         client←args.client
         cArgs←parseArgs args ⍝ Create client args

@@ -69,6 +69,7 @@ public class CodeGeneratorService
                     OperationId = operationId,
                     Method = method,
                     Path = path,
+                    DyalogPath = ToDyalogPath(path),
                     Summary = operation.Summary,
                     Description = operation.Description,
                     Tags = operation.Tags?.Select(t => t.Name).Where(n => n != null).Cast<string>().ToList() ?? new(),
@@ -277,6 +278,48 @@ public class CodeGeneratorService
             JsonSchemaType.Object => "namespace",
             _ => "any"
         };
+    }
+
+    /// <summary>
+    /// Converts a string with path parameters to an APL expression
+    /// E.x. "/user/{userId}" -> "'/user/',args.userId"
+    /// </summary>
+    private string ToDyalogPath(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return "''";
+        
+        var parts = new List<string>();
+        var currentIndex = 0;
+        
+        var matches = System.Text.RegularExpressions.Regex.Matches(path, @"\{([^}]+)\}");
+        
+        foreach (System.Text.RegularExpressions.Match match in matches)
+        {
+            // Text before the parameter
+            if (match.Index > currentIndex)
+            {
+                var text = path.Substring(currentIndex, match.Index - currentIndex);
+                parts.Add($"'{text}'");
+            }
+            
+            // The parameter itself
+            var paramName = match.Groups[1].Value;
+            parts.Add($"args.{paramName}");
+            
+            currentIndex = match.Index + match.Length;
+        }
+        
+        // Remaining text after the last parameter
+        if (currentIndex < path.Length)
+        {
+            var text = path.Substring(currentIndex);
+            parts.Add($"'{text}'");
+        }
+        
+        if (parts.Count == 0) return "''";
+        if (parts.Count == 1) return parts[0];
+        
+        return string.Join(",", parts);
     }
 
     /// <summary>
