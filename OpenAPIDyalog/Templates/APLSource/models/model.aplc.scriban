@@ -30,13 +30,18 @@
             :If 0∊⍴{{ prop.dyalog_name }}
                 build.{{ prop.api_name }}←⍬
             :Else
-                build.{{ prop.api_name }}←{{ prop.dyalog_name }}.FormatNS
+                build.{{ prop.api_name }}←1∘/{{ prop.dyalog_name }}.FormatNS ⍝ Ensure minimum rank 1
             :EndIf 
             {{~ else ~}}
                 build.{{ prop.api_name }}←{{ prop.dyalog_name }}.FormatNS
             {{~ end ~}}
             {{~ else ~}}
+
+            {{~ if prop.is_array ~}}
+            build.{{ prop.api_name }}←1∘/⊆{{ prop.dyalog_name }} 
+            {{~ else ~}}
             build.{{ prop.api_name }}←{{ prop.dyalog_name }} 
+            {{~ end ~}}
             {{~ end ~}}
         :EndIf
 
