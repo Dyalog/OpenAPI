@@ -18,6 +18,13 @@
     ⍝ Body: ⎕NEW models.{{ request_body_type }}
     {{~ end ~}}
     
+    isValidPathParam←{
+        ⍝ True if argument is a character vector or a scalar number
+        isCharVec←(0=≡⍵)∧2|⎕DR ⍵
+        isScalarNum←(1=≢⍴⍵)∧0=10|⎕DR ⍵
+        isCharVec ∨ isScalarNum
+    }
+    
     ∇ r←parseArgs args;params
         params←⎕ns ''
         
@@ -31,7 +38,7 @@
         {{~ if param.in == "Path" ~}}
         ⍝ Path Param
         :If 2≠args.⎕NC'{{ param.name }}'⋄'{{ param.name }} is required' ⎕SIGNAL 100 ⋄ :EndIf
-        :If {~({(0=≡⍵)∧2|⎕DR⍵}⍵)∨((1=≢∘⍴)∧0=10|⎕DR)⍵}args.{{ param.name }}⋄'{{ param.name }} should be a character vector or a scalar number' ⎕SIGNAL 100 ⋄ :EndIf
+        :If ~isValidPathParam args.{{ param.name }}⋄'{{ param.name }} should be a character vector or a scalar number' ⎕SIGNAL 100 ⋄ :EndIf
         :If 2|⎕DR args.{{ param.name }} ⋄ args.{{ param.name }}←⍕args.{{ param.name }} ⋄ :EndIf ⍝ Convert to a character vector 
         {{~ end ~}}
         {{~ end ~}}
