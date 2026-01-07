@@ -22,7 +22,7 @@
         ⍝ True if argument is a character vector or a scalar number
         isChar←(0=10|⎕DR)⍵
         isScalarNum←(1=≢⍴⍵)∧0=10|⎕DR ⍵
-        isCharVec ∨ isScalarNum
+        isChar ∨ isScalarNum
     }
     
     ∇ r←parseArgs args;params
