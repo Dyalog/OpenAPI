@@ -20,7 +20,7 @@
     
     isValidPathParam←{
         ⍝ True if argument is a character vector or a scalar number
-        isCharVec←(0=≡⍵)∧2|⎕DR ⍵
+        isChar←(0=10|⎕DR)⍵
         isScalarNum←(1=≢⍴⍵)∧0=10|⎕DR ⍵
         isCharVec ∨ isScalarNum
     }
