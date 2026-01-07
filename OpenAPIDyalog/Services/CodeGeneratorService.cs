@@ -282,7 +282,7 @@ public class CodeGeneratorService
 
     /// <summary>
     /// Converts a string with path parameters to an APL expression
-    /// E.x. "/user/{userId}" -> "'/user/',args.userId"
+    /// E.g. "/user/{userId}" -> "'/user/',args.userId"
     /// </summary>
     private string ToDyalogPath(string path)
     {
