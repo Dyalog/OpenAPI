@@ -10,7 +10,7 @@
     :field public {{ prop.dyalog_name }} ⍝ {{ prop.type }}
     {{~ end ~}}
 
-    ∇ make1 args;names
+    ∇ make1 args
         :Access public
         :Implements constructor
         ⍝ We will assume correct
