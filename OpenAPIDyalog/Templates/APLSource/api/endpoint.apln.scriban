@@ -26,13 +26,12 @@
     }
     
     ∇ r←parseArgs args;params
-        params←⎕ns ''
-        
+        queryParams←()
         {{~ for param in parameters ~}}
         {{~ if param.in == "Query" ~}}
         ⍝ Query param
         :If (2=args.⎕NC'{{ param.name }}')
-            params.{{ param.name }}←args.{{ param.name }} 
+            queryParams.{{ param.name }}←args.{{ param.name }} 
         :EndIf
         {{~ end ~}}
         {{~ if param.in == "Path" ~}}
@@ -44,10 +43,11 @@
         {{~ end ~}}
         
         {{~ if request_body_type ~}}
+        params←()
         ⍝ If we have a body, take the body from the args
         ⍝ Note that the body will be a model class
         {{ if !request_body.required }}:If (0≠args.⎕NC'{{ request_body_type }}'){{ else }}:If 0=args.⎕NC'{{ request_body_type }}'⋄'{{ request_body_type }} is required' ⎕SIGNAL 100 ⋄ :EndIf{{ end }} 
-        params←params ⎕NS args.{{ request_body_type }}.FormatNS
+        params←args.{{ request_body_type }}.FormatNS
         {{ if !request_body.required }}:EndIf{{ end }}
         {{~ end ~}}
         
@@ -57,8 +57,11 @@
             Command: '{{ method }}'
             URL: {{ dyalog_path }}
             ContentType: 'application/json' ⍝ For now....
-            Params: params
+            {{ if request_body_type }}Params: params{{ end }}
         )
+        :If 0≠⍴queryParams.⎕NL-⍳9
+            r.URL,←'?',args.client.HttpCommand.UrlEncode queryParams
+        :EndIf
     ∇ 
 
     ∇ r←parseResponse response
