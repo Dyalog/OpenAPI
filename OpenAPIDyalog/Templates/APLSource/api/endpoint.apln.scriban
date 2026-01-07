@@ -30,15 +30,15 @@
         {{~ end ~}}
         {{~ if param.in == "Path" ~}}
         ⍝ Path Param
-        :If 2≠args.⎕NC'{{ param.name }}'⋄'{{ param.name }} is required' ⎕SIGNAL 0 ⋄ :EndIf
-        :If ~((1=≢∘⍴)∧0=10|⎕DR)args.{{ param.name }}⋄'{{ param.name }} should be a character vector' ⎕SIGNAL 0 ⋄ :EndIf
+        :If 2≠args.⎕NC'{{ param.name }}'⋄'{{ param.name }} is required' ⎕SIGNAL 100 ⋄ :EndIf
+        :If ~((1=≢∘⍴)∧0=10|⎕DR)args.{{ param.name }}⋄'{{ param.name }} should be a character vector' ⎕SIGNAL 100 ⋄ :EndIf
         {{~ end ~}}
         {{~ end ~}}
         
         {{~ if request_body_type ~}}
         ⍝ If we have a body, take the body from the args
         ⍝ Note that the body will be a model class
-        {{ if !request_body.required }}:If (0≠args.⎕NC'{{ request_body_type }}'){{ else }}:If 0=args.⎕NC'{{ request_body_type }}'⋄'{{ request_body_type }} is required' ⎕SIGNAL 0 ⋄ :EndIf{{ end }} 
+        {{ if !request_body.required }}:If (0≠args.⎕NC'{{ request_body_type }}'){{ else }}:If 0=args.⎕NC'{{ request_body_type }}'⋄'{{ request_body_type }} is required' ⎕SIGNAL 100 ⋄ :EndIf{{ end }} 
         params←params ⎕NS args.{{ request_body_type }}.FormatNS
         {{ if !request_body.required }}:EndIf{{ end }}
         {{~ end ~}}
@@ -92,7 +92,7 @@
         ⍝ This is a {{ method | string.upcase }} command
         :If 0=args.⎕NC'client'
             ⍝ No Client oops
-            'client is required' ⎕SIGNAL 0   
+            'client is required' ⎕SIGNAL 100   
         :EndIf
         client←args.client
         cArgs←parseArgs args ⍝ Create client args
