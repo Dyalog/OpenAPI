@@ -103,15 +103,11 @@ public class CodeGeneratorService
                                             context.RequestJsonBodyType = ToCamelCase(id, firstUpper: true);
                                         }
                                     }
-                                    else if (schema.Type == JsonSchemaType.Array && schema.Items != null)
-                                    {
-                                        if (schema.Items is OpenApiSchemaReference itemsReference)
+                                    else if (schema.Type == JsonSchemaType.Array && schema.Items is OpenApiSchemaReference itemsReference)                                    {
+                                        var id = itemsReference.Reference.Id;
+                                        if (!string.IsNullOrEmpty(id))
                                         {
-                                            var id = itemsReference.Reference.Id;
-                                            if (!string.IsNullOrEmpty(id))
-                                            {
-                                                context.RequestJsonBodyType = ToCamelCase(id, firstUpper: true);
-                                            }
+                                            context.RequestJsonBodyType = ToCamelCase(id, firstUpper: true);
                                         }
                                     }
                                 }
@@ -121,6 +117,10 @@ public class CodeGeneratorService
                             case "application/octet-stream":
                                 context.RequestContentType = contentType;
                                 supportedContentTypeFound = true;
+                                break;
+                            
+                            default:
+                                // Unsupported content type; handled by final NotSupportedException if no supported type is found.
                                 break;
                         }
 

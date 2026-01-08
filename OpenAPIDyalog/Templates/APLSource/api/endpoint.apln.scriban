@@ -52,6 +52,7 @@
         
         {{~ if request_content_type=="application/octet-stream" ~}}
         ⍝ Body is octet-stream
+        params←''
         {{ if !request_body.required }}:If (0≠args.⎕NC'body'){{ else }}:If 0=args.⎕NC'body'⋄'body is required' ⎕SIGNAL 100 ⋄ :EndIf{{ end }} 
         params←args.body
         {{ if !request_body.required }}:EndIf{{ end }}
@@ -100,10 +101,10 @@
         ⍝ (
         ⍝   client: Client (required)
         {{~ if request_json_body_type ~}}
-        ⍝   {{ request_json_body_type }}: {{ request_json_body_type }} (required)
+        ⍝   {{ request_json_body_type }}: {{ request_json_body_type }} ({{ if request_body.required }}required{{ else }}optional{{ end }})
         {{~ end ~}}
         {{~ if request_content_type=="application/octet-stream" ~}}
-        ⍝   body: Byte Array (required)
+        ⍝   body: Byte Array ({{ if request_body.required }}required{{ else }}optional{{ end }})
         {{~ end ~}}
         {{~ for param in parameters ~}}
         ⍝   {{ param.name }}: {{ param.schema.type ?? "any" }} ({{ if param.required }}required{{ else }}not required{{ end }})
