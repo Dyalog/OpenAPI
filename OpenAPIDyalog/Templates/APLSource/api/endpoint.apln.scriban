@@ -13,9 +13,8 @@
     ⍝ {{ param.name }}: {{ param.schema.type ?? "any" }}{{ if param.required }}, required{{ else }}, optional{{ end }}, {{ param.in }}
     {{~ end ~}}
     {{~ end ~}}
-    {{~ if request_body_type ~}}
-        
-    ⍝ Body: ⎕NEW models.{{ request_body_type }}
+    {{~ if request_json_body_type ~}}
+    ⍝ Body: ⎕NEW models.{{ request_json_body_type }}
     {{~ end ~}}
     
     isValidPathParam←{
@@ -42,12 +41,19 @@
         {{~ end ~}}
         {{~ end ~}}
         
-        {{~ if request_body_type ~}}
+        {{~ if request_json_body_type ~}}
         params←()
         ⍝ If we have a body, take the body from the args
         ⍝ Note that the body will be a model class
-        {{ if !request_body.required }}:If (0≠args.⎕NC'{{ request_body_type }}'){{ else }}:If 0=args.⎕NC'{{ request_body_type }}'⋄'{{ request_body_type }} is required' ⎕SIGNAL 100 ⋄ :EndIf{{ end }} 
-        params←args.{{ request_body_type }}.FormatNS
+        {{ if !request_body.required }}:If (0≠args.⎕NC'{{ request_json_body_type }}'){{ else }}:If 0=args.⎕NC'{{ request_json_body_type }}'⋄'{{ request_json_body_type }} is required' ⎕SIGNAL 100 ⋄ :EndIf{{ end }} 
+        params←args.{{ request_json_body_type }}.FormatNS
+        {{ if !request_body.required }}:EndIf{{ end }}
+        {{~ end ~}}
+        
+        {{~ if request_content_type=="application/octet-stream" ~}}
+        ⍝ Body is octet-stream
+        {{ if !request_body.required }}:If (0≠args.⎕NC'body'){{ else }}:If 0=args.⎕NC'body'⋄'body is required' ⎕SIGNAL 100 ⋄ :EndIf{{ end }} 
+        params←args.body
         {{ if !request_body.required }}:EndIf{{ end }}
         {{~ end ~}}
         
@@ -56,8 +62,8 @@
         r←( ⍝ Basically HttpCommand args in a nutshell
             Command: '{{ method }}'
             URL: {{ dyalog_path }}
-            ContentType: 'application/json' ⍝ For now....
-            {{ if request_body_type }}Params: params{{ end }}
+            ContentType: '{{ request_content_type ?? "application/json" }}'
+            {{ if request_content_type }}Params: params{{ end }}
         )
         :If 0≠⍴queryParams.⎕NL-⍳9
             r.URL,←'?',args.client.HttpCommand.UrlEncode queryParams
@@ -93,8 +99,11 @@
         ⍝ Args is a ns
         ⍝ (
         ⍝   client: Client (required)
-        {{~ if request_body_type ~}}
-        ⍝   {{ request_body_type }}: {{ request_body_type }} (required)
+        {{~ if request_json_body_type ~}}
+        ⍝   {{ request_json_body_type }}: {{ request_json_body_type }} (required)
+        {{~ end ~}}
+        {{~ if request_content_type=="application/octet-stream" ~}}
+        ⍝   body: Byte Array (required)
         {{~ end ~}}
         {{~ for param in parameters ~}}
         ⍝   {{ param.name }}: {{ param.schema.type ?? "any" }} ({{ if param.required }}required{{ else }}not required{{ end }})

@@ -53,9 +53,14 @@ public class OperationTemplateContext
     public IOpenApiRequestBody? RequestBody { get; set; }
 
     /// <summary>
-    /// The name of the model for the request body, if any.
+    /// The content type for the request body.
     /// </summary>
-    public string? RequestBodyType { get; set; }
+    public string? RequestContentType { get; set; }
+
+    /// <summary>
+    /// The name of the model for the JSON request body, if any.
+    /// </summary>
+    public string? RequestJsonBodyType { get; set; }
 
     /// <summary>
     /// Responses for this operation.

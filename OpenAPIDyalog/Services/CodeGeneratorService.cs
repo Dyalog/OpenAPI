@@ -82,29 +82,55 @@ public class CodeGeneratorService
                 // Extract request body model name if present
                 if (operation.RequestBody?.Content != null)
                 {
-                    var jsonContent = operation.RequestBody.Content.Values.FirstOrDefault();
-                    var schema = jsonContent?.Schema;
-                    if (schema != null)
+                    bool supportedContentTypeFound = false;
+                    foreach (var content in operation.RequestBody.Content)
                     {
-                        if (schema is OpenApiSchemaReference reference)
+                        var contentType = content.Key;
+                        var mediaType = content.Value;
+                        var schema = mediaType.Schema;
+
+                        switch (contentType)
                         {
-                            var id = reference.Reference.Id;
-                            if (!string.IsNullOrEmpty(id))
-                            {
-                                context.RequestBodyType = ToCamelCase(id, firstUpper: true);
-                            }
-                        }
-                        else if (schema.Type == JsonSchemaType.Array && schema.Items != null)
-                        {
-                            if (schema.Items is OpenApiSchemaReference itemsReference)
-                            {
-                                var id = itemsReference.Reference.Id;
-                                if (!string.IsNullOrEmpty(id))
+                            case "application/json":
+                                context.RequestContentType = contentType;
+                                if (schema != null)
                                 {
-                                    context.RequestBodyType = ToCamelCase(id, firstUpper: true);
+                                    if (schema is OpenApiSchemaReference reference)
+                                    {
+                                        var id = reference.Reference.Id;
+                                        if (!string.IsNullOrEmpty(id))
+                                        {
+                                            context.RequestJsonBodyType = ToCamelCase(id, firstUpper: true);
+                                        }
+                                    }
+                                    else if (schema.Type == JsonSchemaType.Array && schema.Items != null)
+                                    {
+                                        if (schema.Items is OpenApiSchemaReference itemsReference)
+                                        {
+                                            var id = itemsReference.Reference.Id;
+                                            if (!string.IsNullOrEmpty(id))
+                                            {
+                                                context.RequestJsonBodyType = ToCamelCase(id, firstUpper: true);
+                                            }
+                                        }
+                                    }
                                 }
-                            }
+                                supportedContentTypeFound = true;
+                                break;
+
+                            case "application/octet-stream":
+                                context.RequestContentType = contentType;
+                                supportedContentTypeFound = true;
+                                break;
                         }
+
+                        if (supportedContentTypeFound) break;
+                    }
+
+                    if (!supportedContentTypeFound && operation.RequestBody.Content.Any())
+                    {
+                        var types = string.Join(", ", operation.RequestBody.Content.Keys);
+                        throw new NotSupportedException($"None of the content types for request body are supported yet: {types}");
                     }
                 }
 
