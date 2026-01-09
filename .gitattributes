@@ -1,1 +1,3 @@
-* text=auto
+* text=auto eol=lf
+*.apl? linguist-language=APL
+*.apl?.scriban linguist-language=APL
