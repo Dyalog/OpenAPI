@@ -26,11 +26,18 @@
     
     ∇ r←parseArgs args;params
         queryParams←()
+        headerParams←⍬
         {{~ for param in parameters ~}}
         {{~ if param.in == "Query" ~}}
         ⍝ Query param
         :If (2=args.⎕NC'{{ param.name }}')
             queryParams.{{ param.name }}←args.{{ param.name }} 
+        :EndIf
+        {{~ end ~}}
+        {{~ if param.in == "Header" ~}}
+        ⍝ Header param
+        :If (2=args.⎕NC'{{ param.name }}')
+            headerParams,←'{{ param.name }}' args.{{ param.name }} 
         :EndIf
         {{~ end ~}}
         {{~ if param.in == "Path" ~}}
@@ -68,6 +75,9 @@
         )
         :If 0≠⍴queryParams.⎕NL-⍳9
             r.URL,←'?',args.client.HttpCommand.UrlEncode queryParams
+        :EndIf
+        :If 0≠⍴headerParams
+            r.Headers←headerParams
         :EndIf
     ∇ 
 
