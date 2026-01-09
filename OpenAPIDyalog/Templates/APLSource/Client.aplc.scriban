@@ -72,6 +72,7 @@
         ⍝ cArgs is a NS that mostly contains HttpCommand args
         cArgs.BaseURL←BaseURL
         ⍝cArgs.Headers←Headers
+        cArgs.Headers,←'User-Agent' ((' Dyalog OpenAPI Generated Client',2⊃Version),⍨'Dyalog-',1↓∊'/',¨2↑HttpCommand.Version)
         cArgs.TranslateData←1
         r←HttpCommand.Do cArgs
     ∇
