@@ -2,7 +2,7 @@ name: Publish MkDocs Documentation
 
 on:
   push:
-    branches: ["main"]
+    branches: ["8-improve-documentation"]
 
 permissions:
   contents: read
