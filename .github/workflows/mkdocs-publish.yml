@@ -30,7 +30,7 @@ jobs:
       uses: actions/configure-pages@v5
     
     - name: Update Assets
-      run: git submodule update --remote --recursive documentation-assets
+      run: git submodule update --remote --recursive docs/documentation-assets
 
     - name: Set up Python
       uses: actions/setup-python@v5
