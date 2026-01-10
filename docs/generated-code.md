@@ -167,7 +167,7 @@ The generated code uses `HttpCommand` for HTTP operations. Operations are called
 
 ## Error Handling
 
-TODO
+The generated client surfaces errors through HTTP status codes and the `HttpCommand` abstraction. Network-level or protocol issues are exposed via `HttpCommand`, while application-level errors are represented as non-success HTTP responses that your code is expected to inspect and handle explicitly.
 
 ### Error Handling Approach
 

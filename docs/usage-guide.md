@@ -16,7 +16,7 @@ dotnet run -- path/to/openapi.json ./output
 - `path/to/openapi.json` - Path to your OpenAPI specification file
 - `./output` - Output directory for generated code (optional)
 
-This will create a complete APL client in the `pet-store/PetStore-Client` directory.
+This will create a complete APL client in the `./output` directory.
 
 ## Using Generated Clients
 
@@ -24,7 +24,7 @@ This will create a complete APL client in the `pet-store/PetStore-Client` direct
 
 ```apl
 ⍝ Load the generated client
-]LINK.Import # pet-store/PetStore-Client/APLSource
+]LINK.Import # ./APLSource
 ```
 
 ### Making API Calls
@@ -41,7 +41,7 @@ result ← api.pet.findPetsByStatus (client:client ⋄ status:'available')
     pets ← result.Data
     ⎕← 'Found ',⍕≢pets,' pets'
 :Else
-    ⎕← 'Error: ',result.Error
+    ⎕← 'Error'
 :EndIf
 ```
 
