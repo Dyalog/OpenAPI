@@ -37,7 +37,7 @@ result←api.pet.addPet.syncDetailed (client:client ⋄ Pet:newPet)
 :If result.statusCode≡200
     ⎕←'Created pet with ID: ',⍕result.parsed.id
 :Else
-    ⎕←'Error: ',result.Error
+    ⎕←'Error'
 :EndIf
 ```
 

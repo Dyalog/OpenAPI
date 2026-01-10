@@ -58,7 +58,7 @@ The `Client.aplc` file contains the main client class that serves as the entry p
     :field public Initialised←0
 
     ∇ (rc msg)←Initialise
-      ⍝ Initialize HttpCommand
+      ⍝ ←Initialise HttpCommand
       ⍝ Checks parent namespace
     ∇
 :EndClass
@@ -95,8 +95,8 @@ Each API operation generates an individual namespace containing helper functions
     ∇
     
     ∇ r←parseResponse response
-        ⍝ Parse HTTP response based on status code
-        ⍝ HttpCommand automatically parses JSON
+        ⍝ HttpCommand returns the response body already JSON-decoded (if applicable)
+        ⍝ This function interprets that data per status code and maps it to models or errors
         ⍝ Returns: Parsed data or error information
     ∇
 :EndNamespace
@@ -152,7 +152,7 @@ Data models are generated from OpenAPI schemas:
 ### Model Features
 
 - **Type Annotations**: Comments document field types and requirements
-- **Namespace Constructor**: Accepts a namespace to initialize fields
+- **Namespace Constructor**: Accepts a namespace to initialise fields
 - **FormatNS Method**: Builds namespace for JSON serialization, excluding undefined fields
 - **Helper Functions**: `isVarDefined` checks field existence
 - **Nested Objects**: Reference types point to other model classes
@@ -174,7 +174,7 @@ The generated client surfaces errors through HTTP status codes and the `HttpComm
 - Each operation's `parseResponse` handles expected status codes
 - HttpCommand provides `HttpStatus` field for checking responses
 - Error responses are returned as-is (pre-parsed by HttpCommand)
-- Client code should check `resp.statusCode` (if using syncDetailed) to determine success/failure
+- Client code should check `result.statusCode` (if using syncDetailed) to determine success/failure
 
 ## Customization
 

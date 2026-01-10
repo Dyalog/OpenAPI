@@ -4,6 +4,7 @@ Welcome to the documentation for the Dyalog APL OpenAPI Client Generator. This t
 
 !!! warning "Development Status"
     This project is in active development and is not yet fully functional.
+    The documentation is also in active development, and as such many sections remain incomplete.
 
 ## Overview
 

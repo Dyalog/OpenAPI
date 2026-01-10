@@ -34,7 +34,7 @@ This will create a complete APL client in the `./output` directory.
 client ← ⎕NEW Client
 
 ⍝ Call an API method
-result ← api.pet.findPetsByStatus (client:client ⋄ status:'available')
+result ← api.pet.findPetsByStatus.syncDetailed (client:client ⋄ status:'available')
 
 ⍝ Handle the response
 :If result.statusCode≡200

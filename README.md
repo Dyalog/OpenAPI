@@ -2,7 +2,7 @@
 
 A C# application for parsing OpenAPI specifications and generating Dyalog APL client code.
 
-**This project is in active development and is not yet functional.**
+**This project is in active development and is not yet fully functional. Many features remain unimplemented.**
 
 ## Project Structure
 
