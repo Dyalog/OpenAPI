@@ -1,3 +1,3 @@
-[submodule "docs/documentation-styles"]
-	path = docs/documentation-styles
-	url = https://github.com/Dyalog/documentation-styles
+[submodule "docs/documentation-assets"]
+	path = docs/documentation-assets
+	url = https://github.com/Dyalog/documentation-assets
