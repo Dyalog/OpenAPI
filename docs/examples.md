@@ -21,11 +21,11 @@ dotnet run -- ../pet-store/openapi.json ../pet-store/PetStore-Client
 client←⎕NEW Client (baseURL:'https://petstore3.swagger.io/api/v3')
 
 ⍝ Find available pets
-pets←api.pet.findPetsByStatus (client:client ⋄ status:'available')
+pets←api.pet.findPetsByStatus.sync (client:client ⋄ status:'available')
 ⎕←'Available pets: ',≢pets
 
 ⍝ Get a specific pet
-pet←api.pet.getPetById (client:client ⋄ petId:1)
+pet←api.pet.getPetById.sync (client:client ⋄ petId:1)
 ⎕←'Pet name: ',pet.name
 
 ⍝ Create a new pet
