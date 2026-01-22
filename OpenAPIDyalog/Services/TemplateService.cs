@@ -103,6 +103,14 @@ public class TemplateService
 
             // Add custom helper functions
             scriptObject.Import("comment_lines", new Func<string?, string>(StringHelpers.CommentLines));
+            scriptObject.Import("get_operations_by_tag", new Func<Dictionary<string, List<Models.ApiTemplateContext.OperationInfo>>>(() =>
+            {
+                if (context is Models.ApiTemplateContext apiCtx)
+                {
+                    return apiCtx.GetOperationsByTag();
+                }
+                return new Dictionary<string, List<Models.ApiTemplateContext.OperationInfo>>();
+            }));
 
             var templateContext = new TemplateContext();
             templateContext.PushGlobal(scriptObject);
