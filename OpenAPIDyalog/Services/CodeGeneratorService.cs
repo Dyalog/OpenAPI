@@ -18,13 +18,65 @@ public class CodeGeneratorService
     }
 
     /// <summary>
+    /// Generates the utils namespace file.
+    /// </summary>
+    /// <param name="document">The OpenAPI document.</param>
+    public async Task GenerateUtilsAsync(OpenApiDocument document)
+    {
+        var template = await _templateService.LoadTemplateAsync("APLSource/utils.apln.scriban");
+
+        var context = new ApiTemplateContext
+        {
+            Document = document,
+            GeneratedAt = DateTime.UtcNow
+        };
+
+        var output = await _templateService.RenderAsync(template, context);
+        var outputPath = Path.Combine(_outputDirectory, "APLSource", "utils.apln");
+
+        await _templateService.SaveOutputAsync(output, outputPath);
+        Console.WriteLine($"  Generated: APLSource/utils.apln");
+    }
+
+    /// <summary>
+    /// Generates the main Client class file.
+    /// </summary>
+    /// <param name="document">The OpenAPI document.</param>
+    /// <param name="className">The name of the client class (optional, defaults to "Client").</param>
+    public async Task GenerateClientAsync(OpenApiDocument document, string? className = null)
+    {
+        var template = await _templateService.LoadTemplateAsync("APLSource/Client.aplc.scriban");
+
+        var context = new ApiTemplateContext
+        {
+            Document = document,
+            GeneratedAt = DateTime.UtcNow
+        };
+
+        // Add class name and tags to custom properties for template
+        if (!string.IsNullOrEmpty(className))
+        {
+            context.CustomProperties["class_name"] = className;
+        }
+
+        var tags = context.GetAllTags().ToList();
+        context.CustomProperties["tags"] = tags;
+
+        var output = await _templateService.RenderAsync(template, context);
+        var outputPath = Path.Combine(_outputDirectory, "APLSource", $"{className ?? "Client"}.aplc");
+
+        await _templateService.SaveOutputAsync(output, outputPath);
+        Console.WriteLine($"  Generated: APLSource/{className ?? "Client"}.aplc");
+    }
+
+    /// <summary>
     /// Generates all endpoint files from an OpenAPI document.
     /// </summary>
     /// <param name="document">The OpenAPI document.</param>
     /// <param name="namespace">The namespace for generated code.</param>
     public async Task GenerateEndpointsAsync(OpenApiDocument document, string? @namespace = null)
     {
-        var template = await _templateService.LoadTemplateAsync("APLSource/api/endpoint.apln.scriban");
+        var template = await _templateService.LoadTemplateAsync("APLSource/_tags/endpoint.aplf.scriban");
         
         // Group operations by tag (similar to Python structure)
         var operationsByTag = new Dictionary<string, List<(string path, string method, OpenApiOperation operation)>>();
@@ -49,21 +101,21 @@ public class CodeGeneratorService
 
         // Generate directory structure and files
         var aplSourceDir = Path.Combine(_outputDirectory, "APLSource");
-        var apiDir = Path.Combine(aplSourceDir, "api");
+        var tagsDir = Path.Combine(aplSourceDir, "_tags");
         var modelsDir = Path.Combine(aplSourceDir, "models");
-        
-        Directory.CreateDirectory(apiDir);
+
+        Directory.CreateDirectory(tagsDir);
         Directory.CreateDirectory(modelsDir);
 
         foreach (var tagGroup in operationsByTag)
         {
-            var tagDir = Path.Combine(apiDir, SanitizeDirectoryName(tagGroup.Key));
+            var tagDir = Path.Combine(tagsDir, SanitizeDirectoryName(tagGroup.Key));
             Directory.CreateDirectory(tagDir);
 
             foreach (var (path, method, operation) in tagGroup.Value)
             {
                 var operationId = operation.OperationId ?? $"{method}_{path.Replace("/", "_").Replace("{", "").Replace("}", "")}";
-                
+
                 var context = new OperationTemplateContext
                 {
                     OperationId = operationId,
@@ -118,7 +170,52 @@ public class CodeGeneratorService
                                 context.RequestContentType = contentType;
                                 supportedContentTypeFound = true;
                                 break;
-                            
+
+                            case "multipart/form-data":
+                                context.RequestContentType = contentType;
+
+                                // Extract form field schema
+                                if (schema?.Properties != null)
+                                {
+                                    var encoding = mediaType.Encoding;
+                                    foreach (var property in schema.Properties)
+                                    {
+                                        var fieldName = property.Key;
+                                        var fieldSchema = property.Value;
+
+                                        var formField = new FormField
+                                        {
+                                            ApiName = fieldName,
+                                            DyalogName = ToCamelCase(fieldName, firstUpper: false),
+                                            IsRequired = schema.Required?.Contains(fieldName) ?? false,
+                                            Description = fieldSchema.Description,
+                                            IsArray = fieldSchema.Type == JsonSchemaType.Array,
+                                            IsBinary = fieldSchema.Format == "binary"
+                                        };
+
+                                        // Determine type
+                                        if (formField.IsBinary)
+                                        {
+                                            formField.Type = "binary";
+                                        }
+                                        else
+                                        {
+                                            formField.Type = MapSchemaTypeToAplType(fieldSchema);
+                                        }
+
+                                        // Get content type from encoding if available
+                                        if (encoding != null && encoding.TryGetValue(fieldName, out var encodingValue))
+                                        {
+                                            formField.ContentType = encodingValue.ContentType;
+                                        }
+
+                                        context.FormFields.Add(formField);
+                                    }
+                                }
+
+                                supportedContentTypeFound = true;
+                                break;
+
                             default:
                                 // Unsupported content type; handled by final NotSupportedException if no supported type is found.
                                 break;
@@ -135,10 +232,10 @@ public class CodeGeneratorService
                 }
 
                 var output = await _templateService.RenderAsync(template, context);
-                var outputPath = Path.Combine(tagDir, $"{operationId}.apln");
-                
+                var outputPath = Path.Combine(tagDir, $"{operationId}.aplf");
+
                 await _templateService.SaveOutputAsync(output, outputPath);
-                Console.WriteLine($"  Generated: APLSource/api/{SanitizeDirectoryName(tagGroup.Key)}/{operationId}.apln");
+                Console.WriteLine($"  Generated: APLSource/_tags/{SanitizeDirectoryName(tagGroup.Key)}/{operationId}.aplf");
             }
         }
     }
@@ -308,7 +405,7 @@ public class CodeGeneratorService
 
     /// <summary>
     /// Converts a string with path parameters to an APL expression
-    /// E.g. "/user/{userId}" -> "'/user/',args.userId"
+    /// E.g. "/user/{userId}" -> "'/user/',argsNs.userId"
     /// </summary>
     private string ToDyalogPath(string path)
     {
@@ -330,7 +427,7 @@ public class CodeGeneratorService
             
             // The parameter itself
             var paramName = match.Groups[1].Value;
-            parts.Add($"args.{paramName}");
+            parts.Add($"argsNs.{paramName}");
             
             currentIndex = match.Index + match.Length;
         }

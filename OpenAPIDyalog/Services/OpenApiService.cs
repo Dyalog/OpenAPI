@@ -25,9 +25,12 @@ public class OpenApiService
 
         try
         {
+            var settings = new OpenApiReaderSettings();
+            settings.AddYamlReader();
+
             using var stream = File.OpenRead(filePath);
-            var (document, diagnostic) = await OpenApiDocument.LoadAsync(stream);
-            
+            var (document, diagnostic) = await OpenApiDocument.LoadAsync(stream, settings: settings);
+
             return new OpenApiParseResult
             {
                 Document = document,

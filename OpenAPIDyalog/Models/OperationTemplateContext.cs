@@ -71,4 +71,9 @@ public class OperationTemplateContext
     /// Whether this operation is deprecated.
     /// </summary>
     public bool Deprecated { get; set; }
+
+    /// <summary>
+    /// Form fields for multipart/form-data requests.
+    /// </summary>
+    public List<FormField> FormFields { get; set; } = new();
 }

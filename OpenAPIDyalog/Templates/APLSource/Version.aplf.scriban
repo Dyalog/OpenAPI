@@ -1,0 +1,4 @@
+r←Version
+⍝ Return the current version
+:Access public shared
+r←'{{ title }}' '{{ version }}' '{{ generated_at | date.to_string "%Y-%m-%d" }}'

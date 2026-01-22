@@ -55,13 +55,22 @@ public class TemplateService
         {
             var scriptObject = new ScriptObject();
             scriptObject.Import(context, renamer: member => ToSnakeCase(member.Name));
-            
+
+            // Import CustomProperties if the context has them
+            if (context is Models.ApiTemplateContext apiContext && apiContext.CustomProperties.Any())
+            {
+                foreach (var prop in apiContext.CustomProperties)
+                {
+                    scriptObject[ToSnakeCase(prop.Key)] = prop.Value;
+                }
+            }
+
             // Add custom helper functions
             scriptObject.Import("comment_lines", new Func<string?, string>(StringHelpers.CommentLines));
-            
+
             var templateContext = new TemplateContext();
             templateContext.PushGlobal(scriptObject);
-            
+
             return template.Render(templateContext);
         }
         catch (Exception ex)
@@ -82,13 +91,22 @@ public class TemplateService
         {
             var scriptObject = new ScriptObject();
             scriptObject.Import(context, renamer: member => ToSnakeCase(member.Name));
-            
+
+            // Import CustomProperties if the context has them
+            if (context is Models.ApiTemplateContext apiContext && apiContext.CustomProperties.Any())
+            {
+                foreach (var prop in apiContext.CustomProperties)
+                {
+                    scriptObject[ToSnakeCase(prop.Key)] = prop.Value;
+                }
+            }
+
             // Add custom helper functions
             scriptObject.Import("comment_lines", new Func<string?, string>(StringHelpers.CommentLines));
-            
+
             var templateContext = new TemplateContext();
             templateContext.PushGlobal(scriptObject);
-            
+
             return await template.RenderAsync(templateContext);
         }
         catch (Exception ex)

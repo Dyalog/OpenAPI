@@ -1,4 +1,4 @@
-:Class Client
+:Class {{ class_name ?? "Client" }}
     ⍝ Generated on {{ generated_at | date.to_string "%Y-%m-%d %H:%M:%S" }} UTC
     ⍝ {{ title }} - Version {{ version }}
     {{~ if description ~}}
@@ -8,77 +8,36 @@
     ⍝ Base URL: {{ base_url }}
     {{~ end ~}}
 
-    (⎕ML ⎕IO)←1
+    :field public ∆ ⍝ Client specific "stuff"
+{{~ for tag in tags ~}}
+    :field public {{ tag }} ⍝ {{ tag | string.capitalize }} tag
+{{~ end ~}}
 
-
-    ∇ r←Version
-        ⍝ Return the current version
-        :Access public shared
-        r←'{{ title }}' '{{ version }}' '{{ generated_at | date.to_string "%Y-%m-%d" }}'
-    ∇
-
-    :field public BaseURL
-    :field public Cookies
-    :field public Headers
-    :field public Timeout
-    :field public VerifySSL
-    :field public FollowRedirects
-    :field public shared HttpCommand←''
-    :field public Initialised←0
-
-    ∇ (rc msg)←Initialise
-      rc←¯1
-      :If Initialised
-          (rc msg)←0 'Already initialised'
-      :Else
-          :If ''≡HttpCommand
-              :If 0≠##.⎕NC'HttpCommand'      ⍝ HttpCommand found in the parent?
-                  HttpCommand←##.HttpCommand ⍝ use it
-              :Else
-                  :Trap 0
-                      ⎕SE.SALT.Load'HttpCommand' ⍝ otherwise load it
-                      :If 0>⊃HttpCommand.Upgrade ⍝ and upgrade it
-                          msg←'Unable to upgrade HttpCommand'
-                          →0
-                      :EndIf
-                  :Else
-                      msg←'Error loading HttpCommand: ',∊⍕⎕DMX.(EM Message)
-                  :EndTrap
-              :EndIf
-          :EndIf
-      :EndIf
-      :If 1=5 6(×2⊥×⍤-)2↑2⊃'.'⎕VFI 2⊃HttpCommand.Version
-          msg←'HttpCommand version 5.6 or later is required'
-      :Else
-          (rc msg)←0 'Initialised'
-          Initialised←1
-      :EndIf
-    ∇
-
-    ∇ make1 args
+    ∇ ∆make config
         :Access public
         :Implements constructor
-        →0⍴⍨0∊⍴args
-        ⍝ We will assume correct
-        ⍝ Args is a namespace
-        ⍝ BaseURL, Cookies, Headers, Timeout, VerifySSL, FollowRedirects
-        args←(baseURL: '' ⋄ cookies: () ⋄ headers: [''⋄''] ⋄ timeout: ⍬ ⋄ verifySSL: 1 ⋄ followRedirects: 0) ⎕ns args
-        BaseURL Cookies Headers Timeout VerifySSL FollowRedirects←args.(baseURL cookies headers timeout verifySSL followRedirects)
-        Initialise
+        :If 0=config.⎕NC'baseUrl'
+            ⎕SIGNAL⊂('EN' 11)('Message' 'Missing required parameter: baseUrl')
+        :EndIf
+
+        ∆←()
+        ∆.config←⎕NS config
+
+        ⍝ Some utility functions
+        ∆.utils←⎕NS ##.utils
+        ∆.utils.c←⎕THIS
+
+        ∆.Version←##.Version
+
+        ∆.HttpCommand←##.HttpCommand
+
+        ⍝ Initialize all tag namespaces
+{{~ for tag in tags ~}}
+        {{ tag }}←⎕NS ##._tags.{{ tag }}
+        {{ tag }}.c←⎕THIS
+{{~ if !for.last ~}}
+
+{{~ end ~}}
+{{~ end ~}}
     ∇
-
-    ∇ r←request cArgs
-        :Access public
-        ⍝ cArgs is a NS that mostly contains HttpCommand args
-        cArgs.BaseURL←BaseURL
-        ⍝cArgs.Headers←Headers
-        cArgs.Headers,←'User-Agent' ((' Dyalog OpenAPI Generated Client',2⊃Version),⍨'Dyalog-',1↓∊'/',¨2↑HttpCommand.Version)
-        cArgs.TranslateData←1
-        r←HttpCommand.Do cArgs
-    ∇
-
-
-
-    
-
 :EndClass
