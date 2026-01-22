@@ -123,6 +123,15 @@ if (result.Document != null)
                 Console.WriteLine($"  Warning: HttpCommand.aplc not found at {httpCommandSource}");
             }
 
+            // Copy the spec file
+            Console.WriteLine();
+            Console.WriteLine("Copying OpenAPI specification...");
+            var specFileName = Path.GetFileName(options.SpecificationPath);
+            var specDest = Path.Combine(options.OutputDirectory, specFileName);
+            File.Copy(options.SpecificationPath, specDest, overwrite: true);
+            Console.WriteLine($"  Copied: {specFileName}");
+
+
             // Generate endpoints
             Console.WriteLine();
             Console.WriteLine("Generating API endpoints...");
@@ -141,6 +150,11 @@ if (result.Document != null)
             Console.WriteLine();
             Console.WriteLine("Generating main client class...");
             await codeGenerator.GenerateClientAsync(result.Document);
+
+            // Generate README
+            Console.WriteLine();
+            Console.WriteLine("Generating README...");
+            await codeGenerator.GenerateReadmeAsync(result.Document);
 
             // Generate models
             Console.WriteLine();

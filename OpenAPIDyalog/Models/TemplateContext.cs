@@ -86,7 +86,7 @@ public class ApiTemplateContext
     public IEnumerable<string> GetAllTags()
     {
         if (Paths == null) return Enumerable.Empty<string>();
-        
+
         return Paths.Values
             .Where(path => path.Operations != null)
             .SelectMany(path => path.Operations!.Values)
@@ -96,5 +96,58 @@ public class ApiTemplateContext
             .Where(name => name != null)
             .Cast<string>()
             .Distinct();
+    }
+
+    /// <summary>
+    /// Gets all operations grouped by tag.
+    /// </summary>
+    public Dictionary<string, List<OperationInfo>> GetOperationsByTag()
+    {
+        var operationsByTag = new Dictionary<string, List<OperationInfo>>();
+
+        if (Paths == null) return operationsByTag;
+
+        foreach (var path in Paths)
+        {
+            if (path.Value?.Operations == null) continue;
+
+            foreach (var operation in path.Value.Operations)
+            {
+                var op = operation.Value;
+                var tag = op.Tags?.FirstOrDefault()?.Name ?? "default";
+
+                if (!operationsByTag.ContainsKey(tag))
+                {
+                    operationsByTag[tag] = new List<OperationInfo>();
+                }
+
+                operationsByTag[tag].Add(new OperationInfo
+                {
+                    OperationId = op.OperationId ?? $"{operation.Key}_{path.Key}",
+                    Method = operation.Key.ToString().ToUpperInvariant(),
+                    Path = path.Key,
+                    Summary = op.Summary,
+                    Description = op.Description,
+                    Parameters = op.Parameters?.ToList() ?? new List<IOpenApiParameter>(),
+                    HasRequestBody = op.RequestBody != null
+                });
+            }
+        }
+
+        return operationsByTag;
+    }
+
+    /// <summary>
+    /// Helper class for operation information in templates.
+    /// </summary>
+    public class OperationInfo
+    {
+        public string OperationId { get; set; } = string.Empty;
+        public string Method { get; set; } = string.Empty;
+        public string Path { get; set; } = string.Empty;
+        public string? Summary { get; set; }
+        public string? Description { get; set; }
+        public List<IOpenApiParameter> Parameters { get; set; } = new();
+        public bool HasRequestBody { get; set; }
     }
 }

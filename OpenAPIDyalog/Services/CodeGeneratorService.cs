@@ -310,6 +310,29 @@ public class CodeGeneratorService
     }
 
     /// <summary>
+    /// Generates the README.md file.
+    /// </summary>
+    public async Task GenerateReadmeAsync(OpenApiDocument document)
+    {
+        var template = await _templateService.LoadTemplateAsync("README.md.scriban");
+
+        var context = new ApiTemplateContext
+        {
+            Document = document,
+            GeneratedAt = DateTime.UtcNow
+        };
+
+        // Add helper data to custom properties
+        context.CustomProperties["class_name"] = "Client";
+
+        var output = await _templateService.RenderAsync(template, context);
+        var outputPath = Path.Combine(_outputDirectory, "README.md");
+
+        await _templateService.SaveOutputAsync(output, outputPath);
+        Console.WriteLine($"  Generated: README.md");
+    }
+
+    /// <summary>
     /// Creates a model template context from an OpenAPI schema.
     /// </summary>
     private ModelTemplateContext CreateModelContext(string schemaName, IOpenApiSchema schema)
