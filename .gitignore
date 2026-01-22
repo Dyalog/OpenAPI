@@ -9,6 +9,8 @@ pet-store/*
 OpenAPIDyalog/output/*
 *.sln
 site/
+TestAPIClient/
+GenTestAPIClient/
 
 # dotenv files
 .env

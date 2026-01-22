@@ -1,0 +1,23 @@
+:Namespace utils
+    ⍝ Generated on {{ generated_at | date.to_string "%Y-%m-%d %H:%M:%S" }} UTC
+    ⍝ {{ title }} - Version {{ version }}
+    ⍝ Utility functions for HTTP requests and parameter validation
+
+    c←⎕NULL  ⍝ Client instance reference
+
+    ∇ r←request cArgs
+        ⍝ cArgs is a namespace containing HttpCommand arguments
+        ⍝ Returns the HttpCommand response
+        cArgs.BaseURL←c.∆.config.baseUrl
+        cArgs.Headers,←'User-Agent' ((' Dyalog OpenAPI Generated Client',2⊃c.∆.Version),⍨'Dyalog-',1↓∊'/',¨2↑c.∆.HttpCommand.Version)
+        cArgs.TranslateData←1
+        r←c.∆.HttpCommand.Do cArgs
+    ∇
+
+    isValidPathParam←{
+        ⍝ True if argument is a character vector or a scalar number
+        isChar←(0=10|⎕DR)⍵
+        isScalarNum←(0=≢⍴⍵)∧2|⎕DR ⍵
+        isChar ∨ isScalarNum
+    }
+:EndNamespace

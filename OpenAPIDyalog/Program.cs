@@ -95,39 +95,38 @@ if (result.Document != null)
                 Namespace = options.Namespace ?? "GeneratedClient"
             };
 
-            // Generate main client files from templates
-            foreach (var templateName in availableTemplates.Where(t => !t.Contains("endpoint") && !t.Contains("models/model.aplc.scriban")))
+            // Generate utilities namespace
+            Console.WriteLine("Generating utilities namespace...");
+            await codeGenerator.GenerateUtilsAsync(result.Document);
+
+            // Generate Version function
+            Console.WriteLine();
+            Console.WriteLine("Generating version function...");
+            var versionTemplate = await templateService.LoadTemplateAsync("APLSource/Version.aplf.scriban");
+            var versionOutput = await templateService.RenderAsync(versionTemplate, context);
+            var versionPath = Path.Combine(options.OutputDirectory, "APLSource", "Version.aplf");
+            await templateService.SaveOutputAsync(versionOutput, versionPath);
+            Console.WriteLine($"  Generated: APLSource/Version.aplf");
+
+            // Copy HttpCommand.aplc (no template, direct copy)
+            Console.WriteLine();
+            Console.WriteLine("Copying HttpCommand library...");
+            var httpCommandSource = Path.Combine(options.TemplateDirectory, "APLSource", "HttpCommand.aplc");
+            var httpCommandDest = Path.Combine(options.OutputDirectory, "APLSource", "HttpCommand.aplc");
+            if (File.Exists(httpCommandSource))
             {
-                Console.Write($"Rendering {templateName}... ");
-                
-                var output = await templateService.LoadAndRenderAsync(templateName, context);
-                
-                // Determine output file name and path based on template structure
-                var outputFileName = Path.GetFileName(templateName).Replace(".scriban", "");
-                var templateSubDir = Path.GetDirectoryName(templateName)?.Replace("\\", "/") ?? "";
-                
-                string outputPath;
-                if (templateSubDir.StartsWith("APLSource"))
-                {
-                    // Preserve APLSource structure
-                    var relativePath = templateSubDir;
-                    var outputDir = Path.Combine(options.OutputDirectory, relativePath);
-                    Directory.CreateDirectory(outputDir);
-                    outputPath = Path.Combine(outputDir, outputFileName);
-                }
-                else
-                {
-                    outputPath = Path.Combine(options.OutputDirectory, outputFileName);
-                }
-                
-                await templateService.SaveOutputAsync(output, outputPath);
-                Console.WriteLine($"✓ Saved to {outputPath}");
+                File.Copy(httpCommandSource, httpCommandDest, overwrite: true);
+                Console.WriteLine($"  Copied: APLSource/HttpCommand.aplc");
+            }
+            else
+            {
+                Console.WriteLine($"  Warning: HttpCommand.aplc not found at {httpCommandSource}");
             }
 
             // Generate endpoints
             Console.WriteLine();
             Console.WriteLine("Generating API endpoints...");
-            
+
             var operationSummary = codeGenerator.GetOperationSummary(result.Document);
             Console.WriteLine($"Operations by tag:");
             foreach (var tag in operationSummary)
@@ -137,6 +136,11 @@ if (result.Document != null)
             Console.WriteLine();
 
             await codeGenerator.GenerateEndpointsAsync(result.Document, options.Namespace);
+
+            // Generate client class
+            Console.WriteLine();
+            Console.WriteLine("Generating main client class...");
+            await codeGenerator.GenerateClientAsync(result.Document);
 
             // Generate models
             Console.WriteLine();
