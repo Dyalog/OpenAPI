@@ -116,6 +116,7 @@ response ← client.{{ tag_group.key }}.{{ op.operation_id }} ()
 **Parameters:**
 {{~ for param in op.parameters ~}}
 - `{{ param.name }}` ({{ param.in }}){{~ if param.required }} **[required]**{{~ end ~}}{{~ if param.schema.type }}: {{ param.schema.type }}{{~ end ~}}{{~ if param.description }} - {{ param.description }}{{~ end ~}}
+
 {{~ end ~}}
 {{~ end ~}}
 
@@ -134,12 +135,13 @@ response.(
     HttpStatus  ⍝ HTTP status code (200, 404, etc.)
     HttpMessage ⍝ HTTP status message
     Headers     ⍝ Response headers
+    ⍝ And more, see: https://dyalog.github.io/HttpCommand/latest/result-response/
 )
 ```
 
 **Example:**
 ```apl
-response ← client.health.getHealth ⍬
+response ← client.health.getHealth ()
 ⎕← 'Status: ', response.HttpStatus
 ⎕← 'Data: ', response.Data
 ```
