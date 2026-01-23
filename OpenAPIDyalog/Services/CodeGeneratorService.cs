@@ -1,5 +1,6 @@
 using Microsoft.OpenApi;
 using OpenAPIDyalog.Models;
+using OpenAPIDyalog.Utils;
 
 namespace OpenAPIDyalog.Services;
 
@@ -59,7 +60,7 @@ public class CodeGeneratorService
             context.CustomProperties["class_name"] = className;
         }
 
-        var tags = context.GetAllTags().Select(tag => ToCamelCase(tag, firstUpper: false)).ToList();
+        var tags = context.GetAllTags().Select(tag => StringHelpers.ToValidAplName(ToCamelCase(tag, firstUpper: false))).ToList();
         context.CustomProperties["tags"] = tags;
         
 
@@ -110,12 +111,13 @@ public class CodeGeneratorService
 
         foreach (var tagGroup in operationsByTag)
         {
-            var tagDir = Path.Combine(tagsDir, SanitizeDirectoryName(tagGroup.Key));
+            var tagDir = Path.Combine(tagsDir, SanitizeDirectoryName(StringHelpers.ToValidAplName(ToCamelCase(tagGroup.Key))));
             Directory.CreateDirectory(tagDir);
 
             foreach (var (path, method, operation) in tagGroup.Value)
             {
                 var operationId = operation.OperationId ?? $"{method}_{path.Replace("/", "_").Replace("{", "").Replace("}", "")}";
+                operationId = StringHelpers.ToValidAplName(operationId);
 
                 var context = new OperationTemplateContext
                 {
@@ -153,14 +155,14 @@ public class CodeGeneratorService
                                         var id = reference.Reference.Id;
                                         if (!string.IsNullOrEmpty(id))
                                         {
-                                            context.RequestJsonBodyType = ToCamelCase(id, firstUpper: false);
+                                            context.RequestJsonBodyType = StringHelpers.ToValidAplName(ToCamelCase(id, firstUpper: false));
                                         }
                                     }
                                     else if (schema.Type == JsonSchemaType.Array && schema.Items is OpenApiSchemaReference itemsReference)                                    {
                                         var id = itemsReference.Reference.Id;
                                         if (!string.IsNullOrEmpty(id))
                                         {
-                                            context.RequestJsonBodyType = ToCamelCase(id, firstUpper: false);
+                                            context.RequestJsonBodyType = StringHelpers.ToValidAplName(ToCamelCase(id, firstUpper: false));
                                         }
                                     }
                                 }
@@ -187,7 +189,7 @@ public class CodeGeneratorService
                                         var formField = new FormField
                                         {
                                             ApiName = fieldName,
-                                            DyalogName = ToCamelCase(fieldName, firstUpper: false),
+                                            DyalogName = StringHelpers.ToValidAplName(ToCamelCase(fieldName, firstUpper: false)),
                                             IsRequired = schema.Required?.Contains(fieldName) ?? false,
                                             Description = fieldSchema.Description,
                                             IsArray = fieldSchema.Type == JsonSchemaType.Array,
@@ -233,7 +235,7 @@ public class CodeGeneratorService
                 var outputPath = Path.Combine(tagDir, $"{operationId}.aplf");
 
                 await _templateService.SaveOutputAsync(output, outputPath);
-                Console.WriteLine($"  Generated: APLSource/_tags/{SanitizeDirectoryName(tagGroup.Key)}/{operationId}.aplf");
+                Console.WriteLine($"  Generated: APLSource/_tags/{SanitizeDirectoryName(StringHelpers.ToValidAplName(tagGroup.Key))}/{operationId}.aplf");
             }
         }
     }
@@ -294,7 +296,7 @@ public class CodeGeneratorService
 
         foreach (var schema in document.Components.Schemas)
         {
-            var schemaName = schema.Key;
+            var schemaName = StringHelpers.ToValidAplName(schema.Key);
             var schemaValue = schema.Value;
                         
             var context = CreateModelContext(schemaName, schemaValue);
@@ -337,7 +339,7 @@ public class CodeGeneratorService
     {
         var context = new ModelTemplateContext
         {
-            ClassName = ToCamelCase(schemaName, firstUpper: true),
+            ClassName = StringHelpers.ToValidAplName(ToCamelCase(schemaName, firstUpper: true)),
             Description = schema.Description,
         };
 
@@ -345,7 +347,7 @@ public class CodeGeneratorService
         {
             foreach (var property in schema.Properties)
             {
-                var propName = property.Key;
+                var propName = StringHelpers.ToValidAplName(property.Key);
                 var propSchema = property.Value;
                 
                 var modelProp = new ModelProperty
@@ -406,7 +408,7 @@ public class CodeGeneratorService
                 var id = schemaReference.Reference.Id;
                 if (!string.IsNullOrEmpty(id))
                 {
-                    return ToCamelCase(id, firstUpper: false);
+                    return StringHelpers.ToValidAplName(ToCamelCase(id, firstUpper: false));
                 }
             }
             return "any";
@@ -448,7 +450,7 @@ public class CodeGeneratorService
             
             // The parameter itself
             var paramName = match.Groups[1].Value;
-            parts.Add($"argsNs.{paramName}");
+            parts.Add($"argsNs.{StringHelpers.ToValidAplName(paramName)}");
             
             currentIndex = match.Index + match.Length;
         }

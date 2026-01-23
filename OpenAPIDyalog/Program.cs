@@ -194,9 +194,9 @@ if (result.Document != null)
             }
 
             // Generate models
-            Console.WriteLine();
-            Console.WriteLine("Generating models...");
-            await codeGenerator.GenerateModelsAsync(result.Document);
+            // Console.WriteLine();
+            //Console.WriteLine("Generating models...");
+            //await codeGenerator.GenerateModelsAsync(result.Document);
 
             Console.WriteLine();
             Console.WriteLine("Code generation complete!");
