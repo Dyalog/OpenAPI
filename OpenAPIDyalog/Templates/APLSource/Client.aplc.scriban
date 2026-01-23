@@ -24,16 +24,16 @@
         ∆.config←⎕NS config
 
         ⍝ Some utility functions
-        ∆.utils←⎕NS ##.utils
+        ∆.utils←⎕NS (⊃∊⎕CLASS ⎕THIS).##.utils
         ∆.utils.c←⎕THIS
 
-        ∆.Version←##.Version
+        ∆.Version←(⊃∊⎕CLASS ⎕THIS).##.Version
 
-        ∆.HttpCommand←##.HttpCommand
+        ∆.HttpCommand←(⊃∊⎕CLASS ⎕THIS).##.HttpCommand
 
         ⍝ Initialize all tag namespaces
 {{~ for tag in tags ~}}
-        {{ tag }}←⎕NS ##._tags.{{ tag }}
+        {{ tag }}←⎕NS (⊃∊⎕CLASS ⎕THIS).##._tags.{{ tag }}
         {{ tag }}.c←⎕THIS
 {{~ if !for.last ~}}
 
