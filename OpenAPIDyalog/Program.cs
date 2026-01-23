@@ -8,10 +8,33 @@ if (args.Length == 0)
     return 1;
 }
 
+// Parse flags and arguments
+var positionalArgs = new List<string>();
+var disableValidation = false;
+
+foreach (var arg in args)
+{
+    if (arg == "--no-validation" || arg == "-nv")
+    {
+        disableValidation = true;
+    }
+    else
+    {
+        positionalArgs.Add(arg);
+    }
+}
+
+if (positionalArgs.Count == 0)
+{
+    DisplayUsage();
+    return 1;
+}
+
 var options = new GeneratorOptions
 {
-    SpecificationPath = args[0],
-    OutputDirectory = args.Length > 1 ? args[1] : "./generated"
+    SpecificationPath = positionalArgs[0],
+    OutputDirectory = positionalArgs.Count > 1 ? positionalArgs[1] : "./generated",
+    DisableValidation = disableValidation
 };
 
 // Validate options
@@ -37,7 +60,7 @@ Console.WriteLine();
 
 // Load and parse the specification
 var openApiService = new OpenApiService();
-var result = await openApiService.LoadSpecificationAsync(options.SpecificationPath);
+var result = await openApiService.LoadSpecificationAsync(options.SpecificationPath, options.DisableValidation);
 
 // Check for errors
 if (!result.IsSuccess)
@@ -128,8 +151,15 @@ if (result.Document != null)
             Console.WriteLine("Copying OpenAPI specification...");
             var specFileName = Path.GetFileName(options.SpecificationPath);
             var specDest = Path.Combine(options.OutputDirectory, specFileName);
-            File.Copy(options.SpecificationPath, specDest, overwrite: true);
-            Console.WriteLine($"  Copied: {specFileName}");
+            try
+            {
+                File.Copy(options.SpecificationPath, specDest, overwrite: true);
+                Console.WriteLine($"  Copied: {specFileName}");
+            }
+            catch (System.Exception)
+            {
+                Console.WriteLine($"Error copying {specFileName}");
+            }
 
 
             // Generate endpoints
@@ -154,7 +184,14 @@ if (result.Document != null)
             // Generate README
             Console.WriteLine();
             Console.WriteLine("Generating README...");
-            await codeGenerator.GenerateReadmeAsync(result.Document);
+            try
+            {
+                await codeGenerator.GenerateReadmeAsync(result.Document);
+            }
+            catch (System.Exception)
+            {
+                Console.WriteLine("ReadMe generation error. Continuing.");
+            }
 
             // Generate models
             Console.WriteLine();
@@ -178,13 +215,17 @@ static void DisplayUsage()
 {
     Console.WriteLine("OpenAPI Dyalog Generator");
     Console.WriteLine();
-    Console.WriteLine("Usage: OpenAPIDyalog <spec-file-path> [output-directory]");
+    Console.WriteLine("Usage: OpenAPIDyalog [options] <spec-file-path> [output-directory]");
     Console.WriteLine();
     Console.WriteLine("Arguments:");
     Console.WriteLine("  <spec-file-path>    Path to the OpenAPI specification file (JSON or YAML)");
     Console.WriteLine("  [output-directory]  Directory for generated files (default: ./generated)");
     Console.WriteLine();
+    Console.WriteLine("Options:");
+    Console.WriteLine("  --no-validation, -nv  Disable OpenAPI specification validation rules");
+    Console.WriteLine();
     Console.WriteLine("Examples:");
     Console.WriteLine("  OpenAPIDyalog openapi.json");
     Console.WriteLine("  OpenAPIDyalog ./specs/petstore.yaml ./output");
+    Console.WriteLine("  OpenAPIDyalog --no-validation github-api.yaml");
 }

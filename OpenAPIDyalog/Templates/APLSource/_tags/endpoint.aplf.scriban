@@ -34,6 +34,11 @@ response←{{ operation_id }} argsNs;headerParams;queryParams;body;clientArgs
 {{~ end ~}}
 {{~ end ~}}
 {{~ end ~}}
+{{~ if request_content_type && request_content_type != "application/json" && request_content_type != "application/octet-stream" && request_content_type != "multipart/form-data" ~}}
+⍝
+⍝ Request Body:
+⍝   - {{ request_content_type }}: Generic data{{ if request_body.required }} (required){{ end }}
+{{~ end ~}}
 {{~ if responses.size > 0 ~}}
 ⍝
 ⍝ Returns:
@@ -110,6 +115,14 @@ body←()
     ⎕SIGNAL⊂('EN' 11)('Message' 'Missing required form field: {{ field.dyalog_name }}')
 :{{ end }}EndIf
 {{~ end ~}}
+{{~ end ~}}
+{{~ if request_content_type && request_content_type != "application/json" && request_content_type != "application/octet-stream" && request_content_type != "multipart/form-data" ~}}
+⍝ Request body ({{ request_content_type }})
+:If (0≠argsNs.⎕NC'data')
+    body←argsNs.data
+:{{ if request_body.required }}Else
+    ⎕SIGNAL⊂('EN' 11)('Message' 'Missing required parameter: data')
+:{{ end }}EndIf
 {{~ end ~}}
 
 ⍝ Build clientArgs

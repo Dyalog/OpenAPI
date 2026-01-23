@@ -10,7 +10,7 @@
 
     :field public ∆ ⍝ Client specific "stuff"
 {{~ for tag in tags ~}}
-    :field public {{ tag }} ⍝ {{ tag | string.capitalize }} tag
+    :field public {{ tag }} ⍝ {{ tag }} tag
 {{~ end ~}}
 
     ∇ ∆make config
