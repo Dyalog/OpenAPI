@@ -59,8 +59,9 @@ public class CodeGeneratorService
             context.CustomProperties["class_name"] = className;
         }
 
-        var tags = context.GetAllTags().ToList();
+        var tags = context.GetAllTags().Select(tag => ToCamelCase(tag, firstUpper: false)).ToList();
         context.CustomProperties["tags"] = tags;
+        
 
         var output = await _templateService.RenderAsync(template, context);
         var outputPath = Path.Combine(_outputDirectory, "APLSource", $"{className ?? "Client"}.aplc");
@@ -152,14 +153,14 @@ public class CodeGeneratorService
                                         var id = reference.Reference.Id;
                                         if (!string.IsNullOrEmpty(id))
                                         {
-                                            context.RequestJsonBodyType = ToCamelCase(id, firstUpper: true);
+                                            context.RequestJsonBodyType = ToCamelCase(id, firstUpper: false);
                                         }
                                     }
                                     else if (schema.Type == JsonSchemaType.Array && schema.Items is OpenApiSchemaReference itemsReference)                                    {
                                         var id = itemsReference.Reference.Id;
                                         if (!string.IsNullOrEmpty(id))
                                         {
-                                            context.RequestJsonBodyType = ToCamelCase(id, firstUpper: true);
+                                            context.RequestJsonBodyType = ToCamelCase(id, firstUpper: false);
                                         }
                                     }
                                 }
@@ -217,17 +218,14 @@ public class CodeGeneratorService
                                 break;
 
                             default:
-                                // Unsupported content type; handled by final NotSupportedException if no supported type is found.
+                                // Catch-all for unsupported content types
+                                // Set the content type and expect a generic 'data' parameter from argsNs
+                                context.RequestContentType = contentType;
+                                supportedContentTypeFound = true;
                                 break;
                         }
 
                         if (supportedContentTypeFound) break;
-                    }
-
-                    if (!supportedContentTypeFound && operation.RequestBody.Content.Any())
-                    {
-                        var types = string.Join(", ", operation.RequestBody.Content.Keys);
-                        throw new NotSupportedException($"None of the content types for request body are supported yet: {types}");
                     }
                 }
 
@@ -245,7 +243,7 @@ public class CodeGeneratorService
     /// </summary>
     private string SanitizeDirectoryName(string name)
     {
-        return name.ToLowerInvariant()
+        return ToCamelCase(name)
             .Replace(" ", "_")
             .Replace("-", "_");
     }
@@ -368,7 +366,7 @@ public class CodeGeneratorService
                     if (!string.IsNullOrEmpty(id))
                     {
                         modelProp.IsReference = true;
-                        modelProp.ReferenceType = ToCamelCase(id, firstUpper: true);
+                        modelProp.ReferenceType = ToCamelCase(id, firstUpper: false);
                     }
                 }
                 else if (propSchema.Type == JsonSchemaType.Array && propSchema.Items != null)
@@ -379,7 +377,7 @@ public class CodeGeneratorService
                         if (!string.IsNullOrEmpty(id))
                         {
                             modelProp.IsReference = true;
-                            modelProp.ReferenceType = ToCamelCase(id, firstUpper: true);
+                            modelProp.ReferenceType = ToCamelCase(id, firstUpper: false);
                         }
                     }
                 }
@@ -408,7 +406,7 @@ public class CodeGeneratorService
                 var id = schemaReference.Reference.Id;
                 if (!string.IsNullOrEmpty(id))
                 {
-                    return ToCamelCase(id, firstUpper: true);
+                    return ToCamelCase(id, firstUpper: false);
                 }
             }
             return "any";

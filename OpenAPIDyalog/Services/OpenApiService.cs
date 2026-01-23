@@ -14,9 +14,10 @@ public class OpenApiService
     /// Loads and parses an OpenAPI specification from a file.
     /// </summary>
     /// <param name="filePath">Path to the OpenAPI specification file.</param>
+    /// <param name="disableValidation">If true, disables OpenAPI validation rules during parsing.</param>
     /// <returns>A tuple containing the parsed document and parsing result.</returns>
     /// <exception cref="FileNotFoundException">Thrown when the specified file does not exist.</exception>
-    public async Task<OpenApiParseResult> LoadSpecificationAsync(string filePath)
+    public async Task<OpenApiParseResult> LoadSpecificationAsync(string filePath, bool disableValidation = false)
     {
         if (!File.Exists(filePath))
         {
@@ -26,6 +27,10 @@ public class OpenApiService
         try
         {
             var settings = new OpenApiReaderSettings();
+            if (disableValidation)
+            {
+                settings.RuleSet = new ValidationRuleSet();
+            }
             settings.AddYamlReader();
 
             using var stream = File.OpenRead(filePath);
@@ -97,7 +102,7 @@ public class OpenApiService
             Console.Error.WriteLine("Errors found while parsing:");
             foreach (var error in diagnostic.Errors)
             {
-                Console.Error.WriteLine($"  - {error.Message}");
+                Console.Error.WriteLine($"  - {error.Pointer} ----- {error.Message}");
             }
         }
     }

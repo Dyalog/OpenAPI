@@ -26,6 +26,11 @@ public class GeneratorOptions
     public string? Namespace { get; set; }
 
     /// <summary>
+    /// Disable OpenAPI specification validation rules.
+    /// </summary>
+    public bool DisableValidation { get; set; }
+
+    /// <summary>
     /// Validates the options.
     /// </summary>
     /// <returns>True if options are valid, false otherwise.</returns>
