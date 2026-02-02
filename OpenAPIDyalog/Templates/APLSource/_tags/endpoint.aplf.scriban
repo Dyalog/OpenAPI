@@ -128,7 +128,7 @@ body←()
 ⍝ Build clientArgs
 clientArgs←( ⍝ Basically HttpCommand args in a nutshell
     Command: '{{ method }}'
-    URL: {{ dyalog_path }}
+    URL: ({{ dyalog_path }} ⋄ ())
     Headers: headerParams
 {{~ if request_body ~}}
     Params: body
@@ -136,9 +136,16 @@ clientArgs←( ⍝ Basically HttpCommand args in a nutshell
     ContentType: '{{ request_content_type ?? "application/json" }}'
 )
 
+⍝ Auth fn
+clientArgs←clientArgs c.∆.utils.Authenticate ⍬
+
+
+queryParams←queryParams ⎕NS 2⊃clientArgs.URL
+clientArgs.URL←⊃clientArgs.URL
 :If 0≠⍴queryParams.⎕NL-⍳9
-    clientArgs.URL,←'?',c.∆.HttpCommand.UrlEncode queryParams
+    clientArgs.URL,←'?',c.∆.HttpCommand.UrlEncode (queryParams)
 :EndIf
 
 ⍝ Run and handle response
 response←c.∆.utils.request clientArgs
+c.∆.Cookies←response.Cookies
