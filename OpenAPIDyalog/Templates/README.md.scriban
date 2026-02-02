@@ -28,14 +28,14 @@ This will load all the generated client code into your active workspace.
 ⍝ Create configuration
 config ← (
 {{~ if base_url }}    baseURL: '{{ base_url }}'{{~ else }}    baseURL: 'https://your-api-server.com'{{~ end ~}}
-{{~ if document.components.security_schemes }}
+{{~ if security_schemes }}
     security: (
         ⍝ Configure your authentication
-{{~ for scheme in document.components.security_schemes ~}}
-{{~ if scheme.value.type == "apiKey" ~}}
-        apiKey: 'your-api-key-here'
+{{~ for scheme in security_schemes ~}}
+{{~ if scheme.value.type == "apikey" ~}}
+        apiKey: 'env:[APIKEY]'
 {{~ else if scheme.value.type == "http" && scheme.value.scheme == "bearer" ~}}
-        bearerToken: 'your-jwt-token-here'
+        bearerToken: 'env:[APIKEY]'
 {{~ end ~}}
 {{~ end ~}}
     )
@@ -46,17 +46,17 @@ config ← (
 client ← ⎕NEW {{ class_name ?? "Client" }} config
 ```
 
-{{~ if document.components.security_schemes }}
+{{~ if security_schemes }}
 ### 2. Authentication
 
 This API uses the following authentication methods:
 
-{{~ for scheme in document.components.security_schemes }}
-#### {{ scheme.key }}
+{{~ for scheme in security_schemes }}
+#### {{ scheme.value.name }}
 - **Type:** {{ scheme.value.type }}
-{{~ if scheme.value.type == "apiKey" ~}}
+{{~ if scheme.value.type == "apikey" ~}}
 - **Location:** {{ scheme.value.in }}
-- **Header/Query Name:** {{ scheme.value.name }}
+- **Header/Query Name:** {{ scheme.value.parameter_name }}
 {{~ else if scheme.value.type == "http" ~}}
 - **Scheme:** {{ scheme.value.scheme }}
 {{~ if scheme.value.bearer_format ~}}

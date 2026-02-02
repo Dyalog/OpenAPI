@@ -11,7 +11,68 @@
         cArgs.BaseURL←c.∆.config.baseUrl
         cArgs.Headers,←'User-Agent' ((' Dyalog OpenAPI Generated Client',2⊃c.∆.Version),⍨'Dyalog-',1↓∊'/',¨2↑c.∆.HttpCommand.Version)
         cArgs.TranslateData←1
+        cArgs.HeaderSubstitution←'env:[' ']' 
+        cArgs.Cookies←c.∆.Cookies
         r←c.∆.HttpCommand.Do cArgs
+    ∇
+
+    ∇ cArgs←cArgs Authenticate endpointSchemes;schemes;scheme;apiKey;bearerToken
+        schemes←(
+        {{~ for scheme in security_schemes ~}}
+            (
+                name: '{{ scheme.value.name }}'
+                type: '{{ scheme.value.type }}'
+                info: (
+                    {{~ if scheme.value.type == "apikey" ~}}
+                    location: '{{ scheme.value.in }}'
+                    name: '{{ scheme.value.parameter_name }}'
+                    {{~ else if scheme.value.type == "http" ~}}
+                    scheme: '{{ scheme.value.scheme }}'
+                    {{~ if scheme.value.bearer_format ~}}
+                    bearerFormat: '{{ scheme.value.bearer_format }}'
+                    {{~ end ~}}
+                    {{~ end ~}}
+                )
+            )
+        {{~ end ~}}
+        )
+        :If endpointSchemes≡⍬
+            endpointSchemes←schemes.name
+        :Else
+            endpointSchemes←,⊆endpointSchemes
+        :EndIf
+
+        ⍝ We don't support oauth right now
+        ⍝schemes/⍨←~schemes.type⍷⍨⊂'oauth2'
+
+        schemes←schemes[schemes.name(⍸∊)endpointSchemes]
+        :If 0=≢schemes
+            ⎕SIGNAL ⊂('EN' 11) ('Message' 'No security schemes available.')
+        :EndIf
+
+        :If ∨/schemes.type∊⊂'apikey'
+        :AndIf (⊂'null')≢⎕VGET ⊂'c.∆.config.security.apiKey' (⊂'null')
+            ⍝apiKey←c.∆.config.security.apiKey
+            scheme←⊃schemes[schemes.type(⍸⍷)⊂'apikey'].info
+            :Select scheme.location
+            :Case 'header'
+                cArgs.Headers,←scheme.name c.∆.config.security.apiKey
+            :Case 'query'
+                cArgs.URL[2] ⎕VSET ⊂scheme.name c.∆.config.security.apiKey
+            :Case 'cookie'
+                ⍝ Do nothing? I guess... 
+            :Else
+                ⎕SIGNAL ⊂('EN' 11) ('Message' 'API security schemes malformed')
+            :EndSelect
+
+        :ElseIf ∨/schemes.type∊⊂'http'
+        :AndIf (⊂'null')≢⎕VGET ⊂'c.∆.config.security.bearerToken' (⊂'null')
+            scheme←⊃schemes[schemes.type(⍸⍷)⊂'http'].info
+            cArgs.Headers,←'Authorization' 'Bearer ',c.∆.config.security.bearerToken
+        :Else
+            ⎕SIGNAL ⊂('EN' 11)('Message' 'No valid security scheme available')
+        :EndIf
+
     ∇
 
     isValidPathParam←{

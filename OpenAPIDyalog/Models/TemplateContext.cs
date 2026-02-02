@@ -61,6 +61,36 @@ public class ApiTemplateContext
     public string? BaseUrl => Servers.FirstOrDefault()?.Url;
 
     /// <summary>
+    /// All security schemes defined in the API, converted to a template-friendly format.
+    /// </summary>
+    public Dictionary<string, SecuritySchemeInfo> SecuritySchemes
+    {
+        get
+        {
+            var schemes = new Dictionary<string, SecuritySchemeInfo>();
+
+            if (Document?.Components?.SecuritySchemes == null)
+                return schemes;
+
+            foreach (var scheme in Document.Components.SecuritySchemes)
+            {
+                schemes[scheme.Key] = new SecuritySchemeInfo
+                {
+                    Name = scheme.Key,
+                    Type = scheme.Value.Type?.ToString().ToLowerInvariant() ?? "unknown",
+                    Description = scheme.Value.Description,
+                    In = scheme.Value.In?.ToString().ToLowerInvariant(),
+                    ParameterName = scheme.Value.Name,
+                    Scheme = scheme.Value.Scheme,
+                    BearerFormat = scheme.Value.BearerFormat
+                };
+            }
+
+            return schemes;
+        }
+    }
+
+    /// <summary>
     /// Additional custom properties for template use.
     /// </summary>
     public Dictionary<string, object> CustomProperties { get; set; } = new();
@@ -149,5 +179,19 @@ public class ApiTemplateContext
         public string? Description { get; set; }
         public List<IOpenApiParameter> Parameters { get; set; } = new();
         public bool HasRequestBody { get; set; }
+    }
+
+    /// <summary>
+    /// Helper class for security scheme information in templates.
+    /// </summary>
+    public class SecuritySchemeInfo
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string? In { get; set; }
+        public string? ParameterName { get; set; }
+        public string? Scheme { get; set; }
+        public string? BearerFormat { get; set; }
     }
 }
