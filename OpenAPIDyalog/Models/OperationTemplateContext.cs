@@ -76,4 +76,36 @@ public class OperationTemplateContext
     /// Form fields for multipart/form-data requests.
     /// </summary>
     public List<FormField> FormFields { get; set; } = new();
+
+    /// <summary>
+    /// Security requirements for this operation.
+    /// Each item represents an alternative security requirement (OR relationship).
+    /// Within each requirement, the schemes must all be satisfied (AND relationship).
+    /// </summary>
+    public List<OpenApiSecurityRequirement> Security { get; set; } = new();
+
+    /// <summary>
+    /// Gets the security scheme names required for this operation.
+    /// Returns all unique security scheme names across all security requirements.
+    /// </summary>
+    public List<string> SecuritySchemeNames
+    {
+        get
+        {
+            if (Security == null || Security.Count == 0)
+                return new List<string>();
+
+            return Security
+                .SelectMany(req => req.Keys)
+                .Select(schemeRef => schemeRef.Reference?.Id ?? string.Empty)
+                .Where(id => !string.IsNullOrEmpty(id))
+                .Distinct()
+                .ToList();
+        }
+    }
+
+    /// <summary>
+    /// Whether this operation requires any security/authentication.
+    /// </summary>
+    public bool HasSecurity => Security != null && Security.Count > 0;
 }

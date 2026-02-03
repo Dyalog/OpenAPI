@@ -1,4 +1,4 @@
-response←{{ operation_id }} argsNs;headerParams;queryParams;body;clientArgs
+response←{{ operation_id }} argsNs;headerParams;queryParams;body;clientArgs;secSchemes
 ⍝ {{ method | string.upcase }} {{ path }}
 {{~ if summary ~}}
 ⍝ {{ summary }}
@@ -132,13 +132,18 @@ clientArgs←( ⍝ Basically HttpCommand args in a nutshell
     Headers: headerParams
 {{~ if request_body ~}}
     Params: body
-{{~ end ~}}
     ContentType: '{{ request_content_type ?? "application/json" }}'
+{{~ end ~}}
 )
 
+{{~ if has_security ~}}
+secSchemes←⍬
+{{~ for scheme in security_scheme_names ~}}
+secSchemes,←⊂'{{ scheme }}'
+{{~ end ~}}
 ⍝ Auth fn
-clientArgs←clientArgs c.∆.utils.Authenticate ⍬
-
+clientArgs←clientArgs c.∆.utils.Authenticate secSchemes
+{{~ end ~}}
 
 queryParams←queryParams ⎕NS 2⊃clientArgs.URL
 clientArgs.URL←⊃clientArgs.URL
@@ -148,4 +153,3 @@ clientArgs.URL←⊃clientArgs.URL
 
 ⍝ Run and handle response
 response←c.∆.utils.request clientArgs
-c.∆.Cookies←response.Cookies
