@@ -23,6 +23,9 @@
         ∆←()
         ∆.config←⎕NS config
 
+        ∆.Cookies←⍬
+        ∆.Debug←0
+
         ⍝ Some utility functions
         ∆.utils←⎕NS (⊃∊⎕CLASS ⎕THIS).##.utils
         ∆.utils.c←⎕THIS

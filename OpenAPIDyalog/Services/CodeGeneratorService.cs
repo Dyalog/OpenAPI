@@ -119,6 +119,14 @@ public class CodeGeneratorService
                 var operationId = operation.OperationId ?? $"{method}_{path.Replace("/", "_").Replace("{", "").Replace("}", "")}";
                 operationId = StringHelpers.ToValidAplName(operationId);
 
+                // Determine security requirements: operation-level overrides document-level
+                // If operation.Security is null, inherit from document.Security
+                // If operation.Security is empty list, it means no security required (explicit override)
+                // If operation.Security has items, use those (explicit override)
+                var securityRequirements = operation.Security != null
+                    ? operation.Security.ToList()
+                    : document.Security?.ToList() ?? new List<OpenApiSecurityRequirement>();
+
                 var context = new OperationTemplateContext
                 {
                     OperationId = operationId,
@@ -131,7 +139,8 @@ public class CodeGeneratorService
                     Parameters = operation.Parameters?.ToList() ?? new(),
                     RequestBody = operation.RequestBody,
                     Responses = operation.Responses?.ToDictionary(r => r.Key, r => r.Value) ?? new(),
-                    Deprecated = operation.Deprecated
+                    Deprecated = operation.Deprecated,
+                    Security = securityRequirements
                 };
 
                 // Extract request body model name if present
@@ -450,7 +459,7 @@ public class CodeGeneratorService
             
             // The parameter itself
             var paramName = match.Groups[1].Value;
-            parts.Add($"argsNs.{StringHelpers.ToValidAplName(paramName)}");
+            parts.Add($"(⍕argsNs.{StringHelpers.ToValidAplName(paramName)})");
             
             currentIndex = match.Index + match.Length;
         }
