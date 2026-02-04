@@ -14,7 +14,7 @@
         cArgs.HeaderSubstitution←'env:[' ']' 
         cArgs.Cookies←c.∆.Cookies
         h←c.∆.HttpCommand.New cArgs
-        :If c.∆.Debug←1
+        :If c.∆.Debug
             ⎕←h.Show
         :EndIf
 
@@ -65,7 +65,7 @@
         :ElseIf ∨/schemes.type∊⊂'http'
         :AndIf (⊂'null')≢ c.∆ ⎕VGET ⊂'config.security.bearerToken' (⊂'null')
             scheme←⊃schemes[schemes.type(⍸⍷)⍨⊂'http'].info
-            cArgs.Headers,←'Authorization' 'Bearer ',c.∆.config.security.bearerToken
+            cArgs.Headers,←'Authorization' ('Bearer ',c.∆.config.security.bearerToken)
         :Else
             ⎕SIGNAL ⊂('EN' 11)('Message' 'No valid/supported security scheme available')
         :EndIf
