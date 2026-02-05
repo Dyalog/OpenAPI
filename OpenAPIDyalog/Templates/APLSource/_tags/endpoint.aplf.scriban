@@ -30,7 +30,10 @@ response←{{ operation_id }} argsNs;headerParams;queryParams;body;clientArgs;se
 {{~ if form_fields.size > 0 ~}}
 ⍝     Form fields:
 {{~ for field in form_fields ~}}
-⍝       - {{ field.dyalog_name }} ({{ field.type }}){{ if field.is_required }} [required]{{ end }}{{ if field.description }} - {{ field.description }}{{ end }}
+⍝       - {{ field.dyalog_name }} ({{ field.type }}){{ if field.is_required }} [required]{{ end }}
+{{~ if field.description ~}}
+{{ comment_lines field.description }}
+{{~ end ~}}
 {{~ end ~}}
 {{~ end ~}}
 {{~ end ~}}
@@ -105,9 +108,12 @@ body←()
 ⍝ Request body (multipart/form-data)
 {{~ for field in form_fields ~}}
 {{~ if field.is_binary ~}}
-⍝ Binary field: {{ field.api_name }}{{ if field.description }} - {{ field.description }}{{ end }}
+⍝ Binary field: {{ field.api_name }}
 {{~ else ~}}
-⍝ Form field: {{ field.api_name }}{{ if field.description }} - {{ field.description }}{{ end }}
+⍝ Form field: {{ field.api_name }}
+{{~ end ~}}
+{{~ if field.description ~}}
+{{ comment_lines field.description }}
 {{~ end ~}}
 :If (0≠argsNs.⎕NC'{{ field.dyalog_name }}')
     body.{{ field.api_name }}←argsNs.{{ field.dyalog_name }}

@@ -11,6 +11,7 @@ public class CodeGeneratorService
 {
     private readonly TemplateService _templateService;
     private readonly string _outputDirectory;
+    private readonly Dictionary<string, IOpenApiSchema> _inlineSchemas = new();
 
     public CodeGeneratorService(TemplateService templateService, string outputDirectory)
     {
@@ -174,6 +175,33 @@ public class CodeGeneratorService
                                             context.RequestJsonBodyType = StringHelpers.ToValidAplName(ToCamelCase(id, firstUpper: false));
                                         }
                                     }
+                                    else if (schema.Type == JsonSchemaType.Object && schema.Properties != null)
+                                    {
+                                        // Inline object schema - generate synthetic model
+                                        string syntheticModelName = GenerateSyntheticModelName(operationId, "Request");
+
+                                        // Store for later model generation
+                                        _inlineSchemas[syntheticModelName] = schema;
+
+                                        // Set request body type to the synthetic name
+                                        context.RequestJsonBodyType = StringHelpers.ToValidAplName(
+                                            ToCamelCase(syntheticModelName, firstUpper: false));
+                                    }
+                                    else if (schema.Type == JsonSchemaType.Array &&
+                                             schema.Items != null &&
+                                             schema.Items.Type == JsonSchemaType.Object &&
+                                             schema.Items.Properties != null)
+                                    {
+                                        // Inline array of objects - generate model for items
+                                        string syntheticModelName = GenerateSyntheticModelName(operationId, "RequestItem");
+
+                                        // Store the items schema
+                                        _inlineSchemas[syntheticModelName] = schema.Items;
+
+                                        // Set request body type
+                                        context.RequestJsonBodyType = StringHelpers.ToValidAplName(
+                                            ToCamelCase(syntheticModelName, firstUpper: false));
+                                    }
                                 }
                                 supportedContentTypeFound = true;
                                 break;
@@ -260,6 +288,28 @@ public class CodeGeneratorService
     }
 
     /// <summary>
+    /// Generates a synthetic model name for inline schemas.
+    /// Format: {OperationId}{Suffix}
+    /// Examples: CreateBatchRequest, UpdateOrderStatusRequest
+    /// </summary>
+    private string GenerateSyntheticModelName(string operationId, string suffix)
+    {
+        string pascalCaseOperationId = ToCamelCase(operationId, firstUpper: true);
+        string baseModelName = $"{pascalCaseOperationId}{suffix}";
+        string modelName = baseModelName;
+
+        // Handle name collisions by appending a number
+        int counter = 2;
+        while (_inlineSchemas.ContainsKey(modelName))
+        {
+            modelName = $"{baseModelName}{counter}";
+            counter++;
+        }
+
+        return modelName;
+    }
+
+    /// <summary>
     /// Gets a summary of operations grouped by tag.
     /// </summary>
     public Dictionary<string, int> GetOperationSummary(OpenApiDocument document)
@@ -299,7 +349,7 @@ public class CodeGeneratorService
         }
 
         var template = await _templateService.LoadTemplateAsync("APLSource/models/model.aplc.scriban");
-        
+
         var modelsDir = Path.Combine(_outputDirectory, "APLSource", "models");
         Directory.CreateDirectory(modelsDir);
 
@@ -307,15 +357,50 @@ public class CodeGeneratorService
         {
             var schemaName = StringHelpers.ToValidAplName(schema.Key);
             var schemaValue = schema.Value;
-                        
+
             var context = CreateModelContext(schemaName, schemaValue);
-            
+
             var output = await _templateService.RenderAsync(template, context);
             var outputPath = Path.Combine(modelsDir, $"{ToCamelCase(schemaName, firstUpper: true)}.aplc");
-            
+
             await _templateService.SaveOutputAsync(output, outputPath);
             Console.WriteLine($"  Generated: APLSource/models/{ToCamelCase(schemaName, firstUpper: true)}.aplc");
         }
+    }
+
+    /// <summary>
+    /// Generates model files from inline schemas discovered during endpoint generation.
+    /// </summary>
+    public async Task GenerateInlineSchemaModelsAsync()
+    {
+        if (_inlineSchemas.Count == 0)
+        {
+            return;
+        }
+
+        var template = await _templateService.LoadTemplateAsync("APLSource/models/model.aplc.scriban");
+        var modelsDir = Path.Combine(_outputDirectory, "APLSource", "models");
+        Directory.CreateDirectory(modelsDir);
+
+        Console.WriteLine($"Generating {_inlineSchemas.Count} inline schema model(s)...");
+
+        foreach (var (schemaName, schema) in _inlineSchemas)
+        {
+            var validSchemaName = StringHelpers.ToValidAplName(schemaName);
+            var context = CreateModelContext(
+                validSchemaName,
+                schema,
+                sourceInfo: "Generated from inline request body schema");
+
+            var output = await _templateService.RenderAsync(template, context);
+            var outputPath = Path.Combine(modelsDir, $"{ToCamelCase(validSchemaName, firstUpper: true)}.aplc");
+
+            await _templateService.SaveOutputAsync(output, outputPath);
+            Console.WriteLine($"  Generated: APLSource/models/{ToCamelCase(validSchemaName, firstUpper: true)}.aplc (from inline schema)");
+        }
+
+        // Clear after generation
+        _inlineSchemas.Clear();
     }
 
     /// <summary>
@@ -344,12 +429,12 @@ public class CodeGeneratorService
     /// <summary>
     /// Creates a model template context from an OpenAPI schema.
     /// </summary>
-    private ModelTemplateContext CreateModelContext(string schemaName, IOpenApiSchema schema)
+    private ModelTemplateContext CreateModelContext(string schemaName, IOpenApiSchema schema, string? sourceInfo = null)
     {
         var context = new ModelTemplateContext
         {
             ClassName = StringHelpers.ToValidAplName(ToCamelCase(schemaName, firstUpper: true)),
-            Description = schema.Description,
+            Description = schema.Description ?? sourceInfo,
         };
 
         if (schema.Properties != null)

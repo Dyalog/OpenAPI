@@ -176,6 +176,10 @@ if (result.Document != null)
 
             await codeGenerator.GenerateEndpointsAsync(result.Document, options.Namespace);
 
+            // Generate models from inline schemas discovered during endpoint generation
+            //Console.WriteLine();
+            //await codeGenerator.GenerateInlineSchemaModelsAsync();
+
             // Generate client class
             Console.WriteLine();
             Console.WriteLine("Generating main client class...");
@@ -193,10 +197,10 @@ if (result.Document != null)
                 Console.WriteLine("ReadMe generation error. Continuing.");
             }
 
-            // Generate models
+            // Generate models from component schemas
             // Console.WriteLine();
-            //Console.WriteLine("Generating models...");
-            //await codeGenerator.GenerateModelsAsync(result.Document);
+            // Console.WriteLine("Generating component schema models...");
+            // await codeGenerator.GenerateModelsAsync(result.Document);
 
             Console.WriteLine();
             Console.WriteLine("Code generation complete!");
