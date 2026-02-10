@@ -119,7 +119,7 @@ public class CodeGeneratorService
             foreach (var (path, method, operation) in tagGroup.Value)
             {
                 var operationId = operation.OperationId ?? $"{method}_{path.Replace("/", "_").Replace("{", "").Replace("}", "")}";
-                operationId = StringHelpers.ToValidAplName(operationId.ToCamelCase());
+                operationId = StringHelpers.ToValidAplName(ToCamelCase(operationId));
 
                 // Determine security requirements: operation-level overrides document-level
                 // If operation.Security is null, inherit from document.Security
@@ -273,7 +273,7 @@ public class CodeGeneratorService
                 var outputPath = Path.Combine(tagDir, $"{operationId}.aplf");
 
                 await _templateService.SaveOutputAsync(output, outputPath);
-                Console.WriteLine($"  Generated: APLSource/_tags/{SanitizeDirectoryName(StringHelpers.ToValidAplName(tagGroup.Key.ToCamelCase()))}/{operationId}.aplf");
+                Console.WriteLine($"  Generated: APLSource/_tags/{SanitizeDirectoryName(StringHelpers.ToValidAplName(ToCamelCase(tagGroup.Key)))}/{operationId}.aplf");
             }
         }
     }
@@ -568,6 +568,6 @@ public class CodeGeneratorService
     /// </summary>
     private string ToCamelCase(string text, bool firstUpper = false)
     {
-        return text.ToCamelCase();
+        return text.Replace("/", "_").ToCamelCase();
     }
 }

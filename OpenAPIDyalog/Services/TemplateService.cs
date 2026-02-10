@@ -173,7 +173,7 @@ public class TemplateService
     /// </summary>
     private static string ToCamelCase(string name)
     {
-        return name.ToCamelCase();
+        return name.Replace("/", "_").ToCamelCase();
     }
 
     /// <summary>
