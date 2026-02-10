@@ -1,3 +1,4 @@
+using CaseConverter;
 using Microsoft.OpenApi;
 using OpenAPIDyalog.Models;
 using OpenAPIDyalog.Utils;
@@ -118,7 +119,7 @@ public class CodeGeneratorService
             foreach (var (path, method, operation) in tagGroup.Value)
             {
                 var operationId = operation.OperationId ?? $"{method}_{path.Replace("/", "_").Replace("{", "").Replace("}", "")}";
-                operationId = StringHelpers.ToValidAplName(operationId);
+                operationId = StringHelpers.ToValidAplName(operationId.ToCamelCase());
 
                 // Determine security requirements: operation-level overrides document-level
                 // If operation.Security is null, inherit from document.Security
@@ -272,7 +273,7 @@ public class CodeGeneratorService
                 var outputPath = Path.Combine(tagDir, $"{operationId}.aplf");
 
                 await _templateService.SaveOutputAsync(output, outputPath);
-                Console.WriteLine($"  Generated: APLSource/_tags/{SanitizeDirectoryName(StringHelpers.ToValidAplName(tagGroup.Key))}/{operationId}.aplf");
+                Console.WriteLine($"  Generated: APLSource/_tags/{SanitizeDirectoryName(StringHelpers.ToValidAplName(tagGroup.Key.ToCamelCase()))}/{operationId}.aplf");
             }
         }
     }
@@ -567,34 +568,6 @@ public class CodeGeneratorService
     /// </summary>
     private string ToCamelCase(string text, bool firstUpper = false)
     {
-        if (string.IsNullOrEmpty(text)) return text;
-        
-        // Split on underscores, hyphens, and capital letters
-        var parts = System.Text.RegularExpressions.Regex
-            .Split(text, @"[-_]|(?=[A-Z])")
-            .Where(s => !string.IsNullOrEmpty(s))
-            .ToList();
-        
-        if (!parts.Any()) return text;
-
-        var result = new System.Text.StringBuilder();
-        
-        for (int i = 0; i < parts.Count; i++)
-        {
-            var part = parts[i];
-            var firstChar = part[0];
-            var rest = part.Length > 1 ? part.Substring(1).ToLower() : string.Empty;
-            if (i == 0)
-            {
-                result.Append(firstUpper ? char.ToUpper(firstChar) + rest
-                                        : char.ToLower(firstChar) + rest);
-            }
-            else
-            {
-                result.Append(char.ToUpper(firstChar) + rest);
-            }
-        }
-        
-        return result.ToString();
+        return text.ToCamelCase();
     }
 }

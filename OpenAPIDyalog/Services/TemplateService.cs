@@ -1,6 +1,7 @@
 using Scriban;
 using Scriban.Runtime;
 using OpenAPIDyalog.Utils;
+using CaseConverter;
 
 namespace OpenAPIDyalog.Services;
 
@@ -172,10 +173,7 @@ public class TemplateService
     /// </summary>
     private static string ToCamelCase(string name)
     {
-        if (string.IsNullOrEmpty(name) || char.IsLower(name[0]))
-            return name;
-        
-        return char.ToLowerInvariant(name[0]) + name.Substring(1);
+        return name.ToCamelCase();
     }
 
     /// <summary>
@@ -183,25 +181,6 @@ public class TemplateService
     /// </summary>
     private static string ToSnakeCase(string name)
     {
-        if (string.IsNullOrEmpty(name))
-            return name;
-        
-        var result = new System.Text.StringBuilder();
-        result.Append(char.ToLowerInvariant(name[0]));
-        
-        for (int i = 1; i < name.Length; i++)
-        {
-            if (char.IsUpper(name[i]))
-            {
-                result.Append('_');
-                result.Append(char.ToLowerInvariant(name[i]));
-            }
-            else
-            {
-                result.Append(name[i]);
-            }
-        }
-        
-        return result.ToString();
+        return name.ToSnakeCase();
     }
 }
