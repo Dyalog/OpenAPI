@@ -10,10 +10,21 @@
         ⍝ Returns the HttpCommand response
         cArgs.BaseURL←c.∆.config.baseUrl
         cArgs.Headers,←'User-Agent' ((' Dyalog OpenAPI Generated Client',2⊃c.∆.Version),⍨'Dyalog-',1↓∊'/',¨2↑c.∆.HttpCommand.Version)
+        cArgs.Headers,←c.∆.config ⎕VGET ⊂'headers' ⍬
         cArgs.TranslateData←1
         cArgs.HeaderSubstitution←'env:[' ']' 
         cArgs.Cookies←c.∆.Cookies
+        cArgs.RequestOnly←c.∆.config.mock ⍝ ⍝ set to 1 if you only want to return the generated HTTP request, but not actually send it
+        cArgs.Timeout←¯10
+        :If 2=c.∆.config.mock
+            r←cArgs
+            →0
+        :EndIf
         h←c.∆.HttpCommand.New cArgs
+        :If 1=c.∆.config.mock
+            r←h.Run
+            →0
+        :EndIF
         :If c.∆.Debug
             ⎕←h.Show
         :EndIf
@@ -22,7 +33,7 @@
         c.∆.Cookies←r.Cookies
     ∇
 
-    ∇ cArgs←cArgs Authenticate endpointSchemes;schemes;scheme;apiKey;bearerToken
+    ∇ cArgs←cArgs Authenticate endpointSchemes;schemes;scheme;apiKey;bearerToken;authStr
         schemes←(
         {{~ for scheme in security_schemes ~}}
             (
@@ -57,15 +68,30 @@
             :Case 'query'
                 cArgs.URL[2] ⎕VSET ⊂scheme.name c.∆.config.security.apiKey
             :Case 'cookie'
-                ⍝ Do nothing? I guess... 
+                ⍝ Do nothing
             :Else
                 ⎕SIGNAL ⊂('EN' 11) ('Message' 'API security schemes malformed')
             :EndSelect
 
         :ElseIf ∨/schemes.type∊⊂'http'
-        :AndIf (⊂'null')≢ c.∆ ⎕VGET ⊂'config.security.bearerToken' (⊂'null')
             scheme←⊃schemes[schemes.type(⍸⍷)⍨⊂'http'].info
-            cArgs.Headers,←'Authorization' ('Bearer ',c.∆.config.security.bearerToken)
+            :Select scheme.scheme
+            :Case 'bearer'
+                :If (⊂'null')≢ c.∆ ⎕VGET ⊂'config.security.bearerToken' (⊂'null')
+                    cArgs.Headers,←'Authorization' ('Bearer ',c.∆.config.security.bearerToken)
+                :Else
+                    ⎕SIGNAL ⊂('EN' 11)('Message' 'Bearer token not configured (config.security.bearerToken)')
+                :EndIf
+            :Case 'basic'
+                :If ∨/(⊂'null')≡¨⎕VGET (↑'config.security.'⊂⍛(,¨)'username' 'password') (⊂'null')
+                    ⎕SIGNAL ⊂('EN' 11)('Message' 'Username or password not configured (config.security.(username password))')
+                :EndIf
+                authStr←base64 ⎕UCS (c.∆.config.security.username),':',(c.∆.config.security.password)
+                cArgs.Headers,←'Authorization' ('Basic ',authStr)
+            :Else
+                ⍝ TODO: Implement other HTTP auth schemes (digest, negotiate, etc.)
+                ⎕SIGNAL ⊂('EN' 11)('Message' 'Unsupported HTTP authentication scheme: ',scheme.scheme)
+            :EndSelect
         :Else
             ⎕SIGNAL ⊂('EN' 11)('Message' 'No valid/supported security scheme available')
         :EndIf
@@ -77,5 +103,24 @@
         isChar←(0=10|⎕DR)⍵
         isScalarNum←(0=≢⍴⍵)∧2|⎕DR ⍵
         isChar ∨ isScalarNum
+    }
+
+    base64←{⎕IO ⎕ML←0 1             ⍝ Base64 encoding and decoding as used in MIME.
+
+        chars←'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+        bits←{,⍉(⍺⍴2)⊤⍵}                   ⍝ encode each element of ⍵ in ⍺ bits,
+                                        ⍝   and catenate them all together
+        part←{((⍴⍵)⍴⍺↑1)⊂⍵}                ⍝ partition ⍵ into chunks of length ⍺
+
+        0=2|⎕DR ⍵:2∘⊥∘(8∘↑)¨8 part{(-8|⍴⍵)↓⍵}6 bits{(⍵≠64)/⍵}chars⍳⍵
+                                        ⍝ decode a string into octets
+
+        four←{                             ⍝ use 4 characters to encode either
+            8=⍴⍵:'=='∇ ⍵,0 0 0 0           ⍝   1,
+            16=⍴⍵:'='∇ ⍵,0 0               ⍝   2
+            chars[2∘⊥¨6 part ⍵],⍺          ⍝   or 3 octets of input
+        }
+        cats←⊃∘(,/)∘((⊂'')∘,)              ⍝ catenate zero or more strings
+        cats''∘four¨24 part 8 bits ⍵
     }
 :EndNamespace

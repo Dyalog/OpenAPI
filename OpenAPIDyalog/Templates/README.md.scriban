@@ -36,6 +36,9 @@ config ← (
         apiKey: 'env:[APIKEY]'
 {{~ else if scheme.value.type == "http" && scheme.value.scheme == "bearer" ~}}
         bearerToken: 'env:[APIKEY]'
+{{~ else if scheme.value.type == "http" && scheme.value.scheme == "basic" ~}}
+        username: 'username'
+        password: 'password'
 {{~ end ~}}
 {{~ end ~}}
     )

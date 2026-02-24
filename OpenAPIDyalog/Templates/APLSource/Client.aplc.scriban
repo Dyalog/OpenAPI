@@ -22,9 +22,10 @@
 
         ∆←()
         ∆.config←⎕NS config
+        ∆.config.mock←∆.config ⎕VGET ⊂'mock' ¯1 ⍝ ¯1 by default. 1 means return the raw HTTP request. 2 means return the namespace that would be sent to HttpCommand.
+        ∆.Debug←0 ⍝ Set to 1 to log the raw HTTP request sent to the server. Not compatible with mock=2
 
         ∆.Cookies←⍬
-        ∆.Debug←0
 
         ⍝ Some utility functions
         ∆.utils←⎕NS (⊃∊⎕CLASS ⎕THIS).##.utils
