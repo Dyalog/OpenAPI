@@ -1,3 +1,4 @@
+using System.Reflection;
 using Scriban;
 using Scriban.Runtime;
 using OpenAPIDyalog.Utils;
@@ -10,29 +11,40 @@ namespace OpenAPIDyalog.Services;
 /// </summary>
 public class TemplateService
 {
-    private readonly string _templateDirectory;
-
-    public TemplateService(string templateDirectory)
+    // Convert a template relative path to its embedded resource name.
+    // "APLSource/Client.aplc.scriban" → "OpenAPIDyalog.Templates.APLSource.Client.aplc.scriban"
+    private static string ToResourceName(string relativePath)
     {
-        _templateDirectory = templateDirectory;
+        var assemblyName = Assembly.GetExecutingAssembly().GetName().Name!;
+        return assemblyName + ".Templates." + relativePath.Replace('/', '.').Replace('\\', '.');
     }
 
     /// <summary>
-    /// Loads a template from the template directory.
+    /// Returns a stream for a non-template embedded resource. The caller owns disposal.
     /// </summary>
-    /// <param name="templateName">Name of the template file (e.g., "client.scriban")</param>
+    public Stream GetEmbeddedResourceStream(string relativePath)
+    {
+        return Assembly.GetExecutingAssembly()
+            .GetManifestResourceStream(ToResourceName(relativePath))
+            ?? throw new InvalidOperationException(
+                $"Embedded resource not found: '{relativePath}'. This is a build defect.");
+    }
+
+    /// <summary>
+    /// Loads a template from embedded resources.
+    /// </summary>
+    /// <param name="templateName">Relative path of the template (e.g., "APLSource/Client.aplc.scriban")</param>
     /// <returns>The loaded template.</returns>
-    /// <exception cref="FileNotFoundException">Thrown when template file is not found.</exception>
+    /// <exception cref="FileNotFoundException">Thrown when the embedded resource is not found.</exception>
     public async Task<Template> LoadTemplateAsync(string templateName)
     {
-        var templatePath = Path.Combine(_templateDirectory, templateName);
-        
-        if (!File.Exists(templatePath))
-        {
-            throw new FileNotFoundException($"Template file not found: {templatePath}", templatePath);
-        }
+        var stream = Assembly.GetExecutingAssembly()
+            .GetManifestResourceStream(ToResourceName(templateName))
+            ?? throw new FileNotFoundException(
+                $"Embedded template not found: '{templateName}'. This is a build defect.", templateName);
 
-        var templateContent = await File.ReadAllTextAsync(templatePath);
+        using var reader = new StreamReader(stream);
+        var templateContent = await reader.ReadToEndAsync();
         var template = Template.Parse(templateContent);
 
         if (template.HasErrors)
@@ -153,19 +165,16 @@ public class TemplateService
     }
 
     /// <summary>
-    /// Lists all available templates in the template directory.
+    /// Lists all available templates embedded in the assembly.
     /// </summary>
-    /// <returns>List of template file names.</returns>
+    /// <returns>List of embedded resource names ending in .scriban.</returns>
     public IEnumerable<string> GetAvailableTemplates()
     {
-        if (!Directory.Exists(_templateDirectory))
-        {
-            return Enumerable.Empty<string>();
-        }
-
-        return Directory.GetFiles(_templateDirectory, "*.scriban", SearchOption.AllDirectories)
-            .Select(path => Path.GetRelativePath(_templateDirectory, path))
-            .Select(path => path.Replace("\\", "/"));
+        var assemblyName = Assembly.GetExecutingAssembly().GetName().Name!;
+        var prefix = assemblyName + ".Templates.";
+        return Assembly.GetExecutingAssembly()
+            .GetManifestResourceNames()
+            .Where(n => n.StartsWith(prefix) && n.EndsWith(".scriban"));
     }
 
     /// <summary>

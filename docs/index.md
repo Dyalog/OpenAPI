@@ -17,7 +17,7 @@ The OpenAPI Client Generator parses OpenAPI 3.0 specifications and generates idi
 
 ## Key Features
 
-- **OpenAPI 3.0 Support**: Full compatibility with OpenAPI 3.0 specifications
+- **OpenAPI 3.0 Support**: Compatibility with OpenAPI 3.0 specifications
 - **Automatic Code Generation**: Generate complete APL client libraries from specs
 - **Modern APL Features**: Uses Dyalog v20.0+ features (not compatible with pre v20.0 versions of Dyalog APL)
 - **Template-Based**: Customizable Scriban templates for code generation

@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    name: Build ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - { rid: win-x64,     os: windows-latest, ext: .exe }
+          - { rid: win-arm64,   os: windows-latest, ext: .exe }
+          - { rid: linux-x64,   os: ubuntu-latest,  ext: ""   }
+          - { rid: linux-arm64, os: ubuntu-latest,  ext: ""   }
+          - { rid: osx-x64,     os: macos-latest,   ext: ""   }
+          - { rid: osx-arm64,   os: macos-latest,   ext: ""   }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish
+        run: >
+          dotnet publish OpenAPIDyalog/OpenAPIDyalog.csproj
+          -r ${{ matrix.rid }}
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:PublishReadyToRun=true
+          -c Release
+          -o publish/${{ matrix.rid }}
+
+      - name: Stage artifact
+        shell: bash
+        run: |
+          mv "publish/${{ matrix.rid }}/OpenAPIDyalog${{ matrix.ext }}" \
+             "publish/${{ matrix.rid }}/openapidyalog-${{ matrix.rid }}${{ matrix.ext }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openapidyalog-${{ matrix.rid }}
+          path: publish/${{ matrix.rid }}/openapidyalog-${{ matrix.rid }}${{ matrix.ext }}
+          retention-days: 7
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: cd artifacts && sha256sum * > SHA256SUMS.txt
+
+      - uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        with:
+          name: Release ${{ github.ref_name }}
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: artifacts/*

@@ -92,14 +92,14 @@ if (result.Document != null)
 
     try
     {
-        var templateService = new TemplateService(options.TemplateDirectory);
+        var templateService = new TemplateService();
         var codeGenerator = new CodeGeneratorService(templateService, options.OutputDirectory);
         
         var availableTemplates = templateService.GetAvailableTemplates().ToList();
 
         if (availableTemplates.Count == 0)
         {
-            Console.WriteLine($"Warning: No templates found in {options.TemplateDirectory}");
+            Console.WriteLine("Warning: No templates found in assembly. This is a build defect.");
             Console.WriteLine("Skipping code generation.");
         }
         else
@@ -131,20 +131,15 @@ if (result.Document != null)
             await templateService.SaveOutputAsync(versionOutput, versionPath);
             Console.WriteLine($"  Generated: APLSource/Version.aplf");
 
-            // Copy HttpCommand.aplc (no template, direct copy)
+            // Copy HttpCommand.aplc (no template, direct byte copy from embedded resource)
             Console.WriteLine();
             Console.WriteLine("Copying HttpCommand library...");
-            var httpCommandSource = Path.Combine(options.TemplateDirectory, "APLSource", "HttpCommand.aplc");
             var httpCommandDest = Path.Combine(options.OutputDirectory, "APLSource", "HttpCommand.aplc");
-            if (File.Exists(httpCommandSource))
-            {
-                File.Copy(httpCommandSource, httpCommandDest, overwrite: true);
-                Console.WriteLine($"  Copied: APLSource/HttpCommand.aplc");
-            }
-            else
-            {
-                Console.WriteLine($"  Warning: HttpCommand.aplc not found at {httpCommandSource}");
-            }
+            using var httpStream = templateService.GetEmbeddedResourceStream("APLSource/HttpCommand.aplc");
+            Directory.CreateDirectory(Path.GetDirectoryName(httpCommandDest)!);
+            using var httpDest = File.Create(httpCommandDest);
+            await httpStream.CopyToAsync(httpDest);
+            Console.WriteLine("  Copied: APLSource/HttpCommand.aplc");
 
             // Copy the spec file
             Console.WriteLine();

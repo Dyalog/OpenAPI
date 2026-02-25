@@ -14,10 +14,9 @@
     <PackageReference Include="Scriban" Version="6.5.2" />
   </ItemGroup>
 
+  <!-- Embed all templates into the assembly for single-file distribution -->
   <ItemGroup>
-    <None Update="Templates\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <EmbeddedResource Include="Templates\**\*" />
   </ItemGroup>
 
 </Project>

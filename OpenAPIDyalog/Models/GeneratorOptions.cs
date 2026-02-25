@@ -16,11 +16,6 @@ public class GeneratorOptions
     public string OutputDirectory { get; set; } = "./generated";
 
     /// <summary>
-    /// Template directory path (for Scriban templates).
-    /// </summary>
-    public string TemplateDirectory { get; set; } = "./Templates";
-
-    /// <summary>
     /// Namespace for generated code.
     /// </summary>
     public string? Namespace { get; set; }
