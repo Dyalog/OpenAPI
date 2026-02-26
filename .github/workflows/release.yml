@@ -4,10 +4,26 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  pull_request:
+  workflow_dispatch:
 
 jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Test
+        run: dotnet test src/OpenAPIDyalog.Tests/OpenAPIDyalog.Tests.csproj
+
   build:
     name: Build ${{ matrix.rid }}
+    needs: test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -28,7 +44,7 @@ jobs:
 
       - name: Publish
         run: >
-          dotnet publish OpenAPIDyalog/OpenAPIDyalog.csproj
+          dotnet publish src/OpenAPIDyalog/OpenAPIDyalog.csproj
           -r ${{ matrix.rid }}
           --self-contained true
           -p:PublishSingleFile=true
@@ -50,6 +66,7 @@ jobs:
 
   release:
     needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -1,72 +1,100 @@
 # Installation
 
-This guide will help you install and set up the Dyalog APL OpenAPI Client Generator.
-
 ## Prerequisites
 
-### Required Software
-
-- **Dyalog APL v20.0 or later**
-    - The generated code uses features introduced in version 20.0
+- **Dyalog APL v20.0 or later** — required to use the generated client code
     - Download from [dyalog.com](https://www.dyalog.com)
 
-- **.NET 10.0 SDK**
-    - Required to build and run the generator
-    - Download from [dotnet.microsoft.com](https://dotnet.microsoft.com/download)
+## Download
 
-### System Requirements
+Download the latest binary for your platform from the [GitHub Releases page](https://github.com/Dyalog/OpenAPI/releases/latest).
 
-- Windows, Linux, or macOS
-- Minimum 4GB RAM
-- 100MB disk space
+=== "Windows"
 
-## Installation Steps
+    | Architecture | File |
+    |---|---|
+    | x64 (most common) | `openapidyalog-win-x64.exe` |
+    | ARM64 | `openapidyalog-win-arm64.exe` |
 
-### 1. Clone the Repository
+=== "Linux"
 
-```bash
-git clone https://github.com/Dyalog/OpenAPI.git
-cd OpenAPI
-```
+    | Architecture | File |
+    |---|---|
+    | x64 (most common) | `openapidyalog-linux-x64` |
+    | ARM64 | `openapidyalog-linux-arm64` |
 
-### 2. Build the Project
+=== "macOS"
 
-```bash
-cd OpenAPIDyalog
-dotnet build
-```
+    | Architecture | File |
+    |---|---|
+    | Apple Silicon (M-series) | `openapidyalog-osx-arm64` |
+    | Intel | `openapidyalog-osx-x64` |
 
-### 3. Verify Installation
+## Setup
 
-```bash
-dotnet run -- --help
-```
+=== "Windows"
 
-## Configuration
+    No additional setup is required. You can run the binary directly from any terminal.
 
-### Generator Options
+    To make it available from anywhere, move it to a directory on your `PATH`, for example `C:\Windows\System32`, or add its containing folder to your `PATH` in System Settings.
 
-The generator can be configured through command-line options or configuration files.
+=== "Linux"
 
-```bash
-dotnet run -- <openapi-spec> [output-directory]
-```
+    Mark the binary as executable:
 
-### Output Directory Structure
+    ```bash
+    chmod +x openapidyalog-linux-x64
+    ```
 
-Generated code will be placed in the output directory with the following structure:
+    Optionally, move it onto your `PATH` so it can be run from anywhere:
 
-```
-output/
-├── README.md              # Generated client documentation
-├── LICENSE.md             # License information
-└── APLSource/
-    ├── Client.aplc        # Main client class
-    ├── api/               # API endpoint implementations
-    └── models/            # Data model classes
-```
+    ```bash
+    mv openapidyalog-linux-x64 /usr/local/bin/openapidyalog
+    ```
+
+=== "macOS"
+
+    macOS quarantines binaries downloaded from the internet. Remove the quarantine attribute before running:
+
+    ```bash
+    xattr -d com.apple.quarantine openapidyalog-osx-arm64
+    ```
+
+    Then mark it as executable:
+
+    ```bash
+    chmod +x openapidyalog-osx-arm64
+    ```
+
+    Optionally, move it onto your `PATH` so it can be run from anywhere:
+
+    ```bash
+    mv openapidyalog-osx-arm64 /usr/local/bin/openapidyalog
+    ```
+
+## Verify
+
+Confirm the tool is working:
+
+=== "Windows"
+
+    ```
+    openapidyalog-win-x64.exe --help
+    ```
+
+=== "Linux"
+
+    ```bash
+    ./openapidyalog-linux-x64 --help
+    ```
+
+=== "macOS"
+
+    ```bash
+    ./openapidyalog-osx-arm64 --help
+    ```
 
 ## Next Steps
 
-- [Usage Guide](usage-guide.md) - Learn how to use the generator
+- [Usage Guide](usage-guide.md) - Learn how to generate and use clients
 - [Examples](examples.md) - See practical examples

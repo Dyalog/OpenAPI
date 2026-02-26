@@ -11,6 +11,7 @@ theme:
     - navigation.path
     - navigation.indexes
     - navigation.sections
+    - content.tabs.link
   name: material
   font:
       text: Be Vietnam Pro
@@ -39,6 +40,8 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.keys
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.highlight:
