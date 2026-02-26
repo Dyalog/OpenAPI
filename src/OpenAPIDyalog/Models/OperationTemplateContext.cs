@@ -88,6 +88,11 @@ public class OperationTemplateContext
     /// Gets the security scheme names required for this operation.
     /// Returns all unique security scheme names across all security requirements.
     /// </summary>
+    /// <remarks>
+    /// KNOWN INCONSISTENCY: This is derived data and could logically be a method, but it is kept as a
+    /// property because the Scriban template references it as <c>security_scheme_names</c> (a property
+    /// expression). Converting it to a method would require a template change, which is out of scope.
+    /// </remarks>
     public List<string> SecuritySchemeNames
     {
         get

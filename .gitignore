@@ -6,7 +6,7 @@
 # Holdens Testing
 pet-store/*
 #!pet-store/PetStore-Client/
-OpenAPIDyalog/output/*
+src/OpenAPIDyalog/output/*
 *.sln
 site/
 TestAPIClient/

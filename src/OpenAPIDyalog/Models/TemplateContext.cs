@@ -5,7 +5,7 @@ namespace OpenAPIDyalog.Models;
 /// <summary>
 /// Represents the data context passed to Scriban templates for code generation.
 /// </summary>
-public class ApiTemplateContext
+public class ApiTemplateContext : ITemplateContext
 {
     /// <summary>
     /// The OpenAPI document being processed.

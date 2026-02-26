@@ -37,7 +37,8 @@ public static class StringHelpers
         'Ⓝ', 'Ⓞ', 'Ⓟ', 'Ⓠ', 'Ⓡ', 'Ⓢ', 'Ⓣ', 'Ⓤ', 'Ⓥ', 'Ⓦ', 'Ⓧ', 'Ⓨ', 'Ⓩ'
     };
 
-    private const char DeltaUnderbar = '⍙';
+    private const char   DeltaUnderbar = '⍙';
+    private const string FallbackName  = "empty";
 
     /// <summary>
     /// Converts a string into a valid APL identifier.
@@ -51,7 +52,7 @@ public static class StringHelpers
     public static string ToValidAplName(string name)
     {
         if (string.IsNullOrEmpty(name))
-            return $"{DeltaUnderbar}empty";
+            return $"{DeltaUnderbar}{FallbackName}";
 
         bool needsTransform = false;
 

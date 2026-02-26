@@ -9,9 +9,15 @@
 
   <ItemGroup>
     <PackageReference Include="CaseConverter" Version="2.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.0" />
     <PackageReference Include="Microsoft.OpenApi" Version="3.3.0" />
     <PackageReference Include="Microsoft.OpenApi.YamlReader" Version="3.3.0" />
     <PackageReference Include="Scriban" Version="6.5.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OpenAPIDyalog.Tests" />
   </ItemGroup>
 
   <!-- Embed all templates into the assembly for single-file distribution -->

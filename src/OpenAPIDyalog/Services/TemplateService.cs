@@ -1,16 +1,26 @@
 using System.Reflection;
+using CaseConverter;
+using Microsoft.Extensions.Logging;
+using OpenAPIDyalog.Models;
+using OpenAPIDyalog.Services.Interfaces;
+using OpenAPIDyalog.Utils;
 using Scriban;
 using Scriban.Runtime;
-using OpenAPIDyalog.Utils;
-using CaseConverter;
 
 namespace OpenAPIDyalog.Services;
 
 /// <summary>
 /// Service for loading and rendering Scriban templates.
 /// </summary>
-public class TemplateService
+public class TemplateService : ITemplateService
 {
+    private readonly ILogger<TemplateService> _logger;
+
+    public TemplateService(ILogger<TemplateService> logger)
+    {
+        _logger = logger;
+    }
+
     // Convert a template relative path to its embedded resource name.
     // "APLSource/Client.aplc.scriban" → "OpenAPIDyalog.Templates.APLSource.Client.aplc.scriban"
     private static string ToResourceName(string relativePath)
@@ -33,9 +43,6 @@ public class TemplateService
     /// <summary>
     /// Loads a template from embedded resources.
     /// </summary>
-    /// <param name="templateName">Relative path of the template (e.g., "APLSource/Client.aplc.scriban")</param>
-    /// <returns>The loaded template.</returns>
-    /// <exception cref="FileNotFoundException">Thrown when the embedded resource is not found.</exception>
     public async Task<Template> LoadTemplateAsync(string templateName)
     {
         var stream = Assembly.GetExecutingAssembly()
@@ -59,31 +66,13 @@ public class TemplateService
     /// <summary>
     /// Renders a template with the provided data context.
     /// </summary>
-    /// <param name="template">The Scriban template to render.</param>
-    /// <param name="context">The data context to pass to the template.</param>
-    /// <returns>The rendered output.</returns>
     public string Render(Template template, object context)
     {
         try
         {
-            var scriptObject = new ScriptObject();
-            scriptObject.Import(context, renamer: member => ToSnakeCase(member.Name));
-
-            // Import CustomProperties if the context has them
-            if (context is Models.ApiTemplateContext apiContext && apiContext.CustomProperties.Any())
-            {
-                foreach (var prop in apiContext.CustomProperties)
-                {
-                    scriptObject[ToSnakeCase(prop.Key)] = prop.Value;
-                }
-            }
-
-            // Add custom helper functions
-            scriptObject.Import("comment_lines", new Func<string?, string>(StringHelpers.CommentLines));
-
+            var scriptObject = BuildScriptObject(context);
             var templateContext = new TemplateContext();
             templateContext.PushGlobal(scriptObject);
-
             return template.Render(templateContext);
         }
         catch (Exception ex)
@@ -95,39 +84,13 @@ public class TemplateService
     /// <summary>
     /// Renders a template asynchronously with the provided data context.
     /// </summary>
-    /// <param name="template">The Scriban template to render.</param>
-    /// <param name="context">The data context to pass to the template.</param>
-    /// <returns>The rendered output.</returns>
     public async Task<string> RenderAsync(Template template, object context)
     {
         try
         {
-            var scriptObject = new ScriptObject();
-            scriptObject.Import(context, renamer: member => ToSnakeCase(member.Name));
-
-            // Import CustomProperties if the context has them
-            if (context is Models.ApiTemplateContext apiContext && apiContext.CustomProperties.Any())
-            {
-                foreach (var prop in apiContext.CustomProperties)
-                {
-                    scriptObject[ToSnakeCase(prop.Key)] = prop.Value;
-                }
-            }
-
-            // Add custom helper functions
-            scriptObject.Import("comment_lines", new Func<string?, string>(StringHelpers.CommentLines));
-            scriptObject.Import("get_operations_by_tag", new Func<Dictionary<string, List<Models.ApiTemplateContext.OperationInfo>>>(() =>
-            {
-                if (context is Models.ApiTemplateContext apiCtx)
-                {
-                    return apiCtx.GetOperationsByTag();
-                }
-                return new Dictionary<string, List<Models.ApiTemplateContext.OperationInfo>>();
-            }));
-
+            var scriptObject = BuildScriptObject(context);
             var templateContext = new TemplateContext();
             templateContext.PushGlobal(scriptObject);
-
             return await template.RenderAsync(templateContext);
         }
         catch (Exception ex)
@@ -139,9 +102,6 @@ public class TemplateService
     /// <summary>
     /// Loads and renders a template in one operation.
     /// </summary>
-    /// <param name="templateName">Name of the template file.</param>
-    /// <param name="context">The data context to pass to the template.</param>
-    /// <returns>The rendered output.</returns>
     public async Task<string> LoadAndRenderAsync(string templateName, object context)
     {
         var template = await LoadTemplateAsync(templateName);
@@ -151,8 +111,6 @@ public class TemplateService
     /// <summary>
     /// Saves rendered output to a file.
     /// </summary>
-    /// <param name="output">The rendered content to save.</param>
-    /// <param name="outputPath">Path where the file should be saved.</param>
     public async Task SaveOutputAsync(string output, string outputPath)
     {
         var directory = Path.GetDirectoryName(outputPath);
@@ -167,7 +125,6 @@ public class TemplateService
     /// <summary>
     /// Lists all available templates embedded in the assembly.
     /// </summary>
-    /// <returns>List of embedded resource names ending in .scriban.</returns>
     public IEnumerable<string> GetAvailableTemplates()
     {
         var assemblyName = Assembly.GetExecutingAssembly().GetName().Name!;
@@ -178,18 +135,39 @@ public class TemplateService
     }
 
     /// <summary>
-    /// Converts a PascalCase string to camelCase.
+    /// Builds the Scriban ScriptObject used by both Render and RenderAsync.
+    /// Converts PascalCase property names to snake_case for templates.
     /// </summary>
-    private static string ToCamelCase(string name)
+    private static ScriptObject BuildScriptObject(object context)
     {
-        return name.Replace("/", "_").ToCamelCase();
+        var scriptObject = new ScriptObject();
+        scriptObject.Import(context, renamer: member => member.Name.ToSnakeCase());
+
+        // Use ITemplateContext interface to merge CustomProperties — no concrete type check needed.
+        if (context is ITemplateContext tc && tc.CustomProperties.Any())
+        {
+            foreach (var prop in tc.CustomProperties)
+            {
+                scriptObject[prop.Key.ToSnakeCase()] = prop.Value;
+            }
+        }
+
+        scriptObject.Import("comment_lines", new Func<string?, string>(StringHelpers.CommentLines));
+
+        // NOTE: get_operations_by_tag still requires an is ApiTemplateContext check because
+        // GetOperationsByTag() is a method on ApiTemplateContext that has no equivalent on
+        // ITemplateContext. This is a known limitation — the interface cannot express
+        // document-scoped operation grouping without coupling it to the OpenAPI domain.
+        scriptObject.Import("get_operations_by_tag",
+            new Func<Dictionary<string, List<ApiTemplateContext.OperationInfo>>>(() =>
+            {
+                if (context is ApiTemplateContext apiCtx)
+                    return apiCtx.GetOperationsByTag();
+                return new Dictionary<string, List<ApiTemplateContext.OperationInfo>>();
+            }));
+
+        return scriptObject;
     }
 
-    /// <summary>
-    /// Converts a PascalCase string to snake_case.
-    /// </summary>
-    private static string ToSnakeCase(string name)
-    {
-        return name.ToSnakeCase();
-    }
+    private static string ToSnakeCase(string name) => name.ToSnakeCase();
 }
