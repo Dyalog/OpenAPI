@@ -24,7 +24,6 @@ jobs:
   build:
     name: Build ${{ matrix.rid }}
     needs: test
-    if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
