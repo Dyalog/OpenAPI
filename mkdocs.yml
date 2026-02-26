@@ -10,7 +10,6 @@ theme:
     - navigation.tracking
     - navigation.path
     - navigation.indexes
-    - navigation.sections
     - content.tabs.link
   name: material
   font:
@@ -26,14 +25,19 @@ extra:
 
 nav:
   - Home: index.md
-  - Getting Started:
-    - Installation: installation.md
-    - Usage Guide: usage-guide.md
-  - User Guide:
-    - Generated Code: generated-code.md
-    - Examples: examples.md
-    - API Reference: api-reference.md
-  - Contributing: contributing.md
+  - Installation: installation.md
+  - Using the Generator:
+    - Overview: usage/index.md
+    - CLI Reference: usage/cli.md
+    - Troubleshooting: usage/troubleshooting.md
+  - Generated Client:
+    - Overview: generated-client/index.md
+    - Client Class: generated-client/client.md
+    - Utilities: generated-client/utils.md
+    - Operation Functions: generated-client/operations.md
+    - Using the Client: generated-client/using-the-client.md
+    - Error Handling: generated-client/error-handling.md
+  - Examples: examples/index.md
 
 markdown_extensions:
   - admonition

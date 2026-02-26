@@ -21,10 +21,3 @@ OpenAPIDyalog path/to/openapi.json ./output
 
 - Dyalog APL v20.0 or later
 - OpenAPI 3.0 specification file
-
-## What's Next?
-
-- [Installation](installation.md) - Get started with installation and setup
-- [Usage Guide](usage-guide.md) - Learn how to generate and use clients
-- [Generated Code](generated-code.md) - Understanding the generated APL code
-- [Examples](examples.md) - See practical examples

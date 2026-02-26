@@ -162,8 +162,8 @@ public static class GeneratorApplication
         Console.WriteLine("  --no-validation, -nv  Disable OpenAPI specification validation rules");
         Console.WriteLine();
         Console.WriteLine("Examples:");
-        Console.WriteLine("  OpenAPIDyalog openapi.json");
-        Console.WriteLine("  OpenAPIDyalog ./specs/petstore.yaml ./output");
-        Console.WriteLine("  OpenAPIDyalog --no-validation github-api.yaml");
+        Console.WriteLine("  OpenAPIDyalog openapispec.json");
+        Console.WriteLine("  OpenAPIDyalog ./specs/openapispec.yaml ./output");
+        Console.WriteLine("  OpenAPIDyalog --no-validation openapispec.yaml");
     }
 }

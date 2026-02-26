@@ -5,7 +5,7 @@
 - **Dyalog APL v20.0 or later** — required to use the generated client code
     - Download from [dyalog.com](https://www.dyalog.com)
 
-## Download
+## Download and Setup
 
 Download the latest binary for your platform from the [GitHub Releases page](https://github.com/Dyalog/OpenAPI/releases/latest).
 
@@ -16,29 +16,22 @@ Download the latest binary for your platform from the [GitHub Releases page](htt
     | x64 (most common) | `openapidyalog-win-x64.exe` |
     | ARM64 | `openapidyalog-win-arm64.exe` |
 
+    No additional setup is required. You can run the binary directly from any terminal.
+
+    To make it available from anywhere, move it to a directory on your `PATH`, for example `C:\Windows\System32`, or add its containing folder to your `PATH` in System Settings.
+
+    Confirm the tool is working:
+
+    ```
+    openapidyalog-win-x64.exe --help
+    ```
+
 === "Linux"
 
     | Architecture | File |
     |---|---|
     | x64 (most common) | `openapidyalog-linux-x64` |
     | ARM64 | `openapidyalog-linux-arm64` |
-
-=== "macOS"
-
-    | Architecture | File |
-    |---|---|
-    | Apple Silicon (M-series) | `openapidyalog-osx-arm64` |
-    | Intel | `openapidyalog-osx-x64` |
-
-## Setup
-
-=== "Windows"
-
-    No additional setup is required. You can run the binary directly from any terminal.
-
-    To make it available from anywhere, move it to a directory on your `PATH`, for example `C:\Windows\System32`, or add its containing folder to your `PATH` in System Settings.
-
-=== "Linux"
 
     Mark the binary as executable:
 
@@ -52,7 +45,18 @@ Download the latest binary for your platform from the [GitHub Releases page](htt
     mv openapidyalog-linux-x64 /usr/local/bin/openapidyalog
     ```
 
+    Confirm the tool is working:
+
+    ```bash
+    openapidyalog --help
+    ```
+
 === "macOS"
+
+    | Architecture | File |
+    |---|---|
+    | Apple Silicon (M-series) | `openapidyalog-osx-arm64` |
+    | Intel | `openapidyalog-osx-x64` |
 
     macOS quarantines binaries downloaded from the internet. Remove the quarantine attribute before running:
 
@@ -72,29 +76,8 @@ Download the latest binary for your platform from the [GitHub Releases page](htt
     mv openapidyalog-osx-arm64 /usr/local/bin/openapidyalog
     ```
 
-## Verify
-
-Confirm the tool is working:
-
-=== "Windows"
-
-    ```
-    openapidyalog-win-x64.exe --help
-    ```
-
-=== "Linux"
+    Confirm the tool is working:
 
     ```bash
-    ./openapidyalog-linux-x64 --help
+    openapidyalog --help
     ```
-
-=== "macOS"
-
-    ```bash
-    ./openapidyalog-osx-arm64 --help
-    ```
-
-## Next Steps
-
-- [Usage Guide](usage-guide.md) - Learn how to generate and use clients
-- [Examples](examples.md) - See practical examples
