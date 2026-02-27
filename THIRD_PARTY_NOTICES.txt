@@ -2,8 +2,8 @@ THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
 
 This product incorporates components from the projects listed below. The original
 copyright notices and the licenses under which Dyalog Ltd. received such components
-are set forth below. Dyalog Ltd. licenses these components to you under the terms
-described in this file; Dyalog Ltd. reserves all other rights not expressly granted.
+are set forth below. These components are licensed to you under their respective 
+licenses as set below. Dyalog Ltd. reserves all other rights not expressly granted.
 
 =======================================================================
 

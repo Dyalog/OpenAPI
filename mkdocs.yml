@@ -22,6 +22,10 @@ extra_javascript:
 
 extra:
   generator: false
+  version_maj: 20
+  version_min: 0
+  version_majmin: 20.0
+  version_condensed: 200
 
 nav:
   - Home: index.md

@@ -23,6 +23,7 @@
   <!-- Embed all templates into the assembly for single-file distribution -->
   <ItemGroup>
     <EmbeddedResource Include="Templates\**\*" />
+    <EmbeddedResource Include="..\..\THIRD_PARTY_NOTICES.txt" LogicalName="OpenAPIDyalog.THIRD_PARTY_NOTICES.txt" />
   </ItemGroup>
 
 </Project>

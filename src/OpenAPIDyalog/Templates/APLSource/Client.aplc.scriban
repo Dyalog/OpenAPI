@@ -1,5 +1,4 @@
 :Class {{ class_name ?? "Client" }}
-    ⍝ Generated on {{ generated_at | date.to_string "%Y-%m-%d %H:%M:%S" }} UTC
     ⍝ {{ title }} - Version {{ version }}
     {{~ if description ~}}
     {{ comment_lines description }}

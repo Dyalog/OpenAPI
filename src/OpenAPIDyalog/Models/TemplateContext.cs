@@ -1,4 +1,5 @@
 using Microsoft.OpenApi;
+using OpenAPIDyalog.Constants;
 
 namespace OpenAPIDyalog.Models;
 
@@ -117,15 +118,24 @@ public class ApiTemplateContext : ITemplateContext
     {
         if (Paths == null) return Enumerable.Empty<string>();
 
-        return Paths.Values
+        var operations = Paths.Values
             .Where(path => path.Operations != null)
             .SelectMany(path => path.Operations!.Values)
-            .Where(op => op.Tags != null)
+            .ToList();
+
+        var explicitTags = operations
+            .Where(op => op.Tags is { Count: > 0 })
             .SelectMany(op => op.Tags!)
             .Select(tag => tag.Name)
             .Where(name => name != null)
             .Cast<string>()
             .Distinct();
+
+        var hasTaglessOperations = operations.Any(op => op.Tags == null || op.Tags.Count == 0);
+        if (hasTaglessOperations)
+            return explicitTags.Append(GeneratorConstants.DefaultTagName).Distinct();
+
+        return explicitTags;
     }
 
     /// <summary>

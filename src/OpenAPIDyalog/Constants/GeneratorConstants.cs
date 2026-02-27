@@ -17,7 +17,8 @@ public static class GeneratorConstants
     public const string VersionTemplate     = "APLSource/Version.aplf.scriban";
     public const string ReadmeTemplate      = "README.md.scriban";
     public const string ModelTemplate       = "APLSource/models/model.aplc.scriban";
-    public const string HttpCommandResource = "APLSource/HttpCommand.aplc";
+    public const string HttpCommandResource        = "APLSource/HttpCommand.aplc";
+    public const string ThirdPartyNoticesResource = "OpenAPIDyalog.THIRD_PARTY_NOTICES.txt";
 
     // ── Content types ─────────────────────────────────────────────────────────
     public const string ContentTypeJson          = "application/json";

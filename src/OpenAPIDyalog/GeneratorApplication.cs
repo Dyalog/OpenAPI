@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.Extensions.Logging;
 using OpenAPIDyalog.Constants;
 using OpenAPIDyalog.Models;
@@ -12,6 +13,18 @@ public static class GeneratorApplication
 {
     public static async Task<int> RunAsync(string[] args)
     {
+        if (args.Contains("--help") || args.Contains("-h"))
+        {
+            DisplayUsage();
+            return 0;
+        }
+
+        if (args.Contains("--third-party-notices"))
+        {
+            DisplayThirdPartyNotices();
+            return 0;
+        }
+
         if (args.Length == 0)
         {
             DisplayUsage();
@@ -147,6 +160,15 @@ public static class GeneratorApplication
         };
     }
 
+    private static void DisplayThirdPartyNotices()
+    {
+        using var stream = Assembly.GetExecutingAssembly()
+            .GetManifestResourceStream(GeneratorConstants.ThirdPartyNoticesResource)
+            ?? throw new InvalidOperationException("Third-party notices resource not found. This is a build defect.");
+        using var reader = new StreamReader(stream);
+        Console.Write(reader.ReadToEnd());
+    }
+
     // DisplayUsage is UI output, not a logging concern — Console.WriteLine is intentional.
     private static void DisplayUsage()
     {
@@ -159,7 +181,9 @@ public static class GeneratorApplication
         Console.WriteLine("  [output-directory]  Directory for generated files (default: ./generated)");
         Console.WriteLine();
         Console.WriteLine("Options:");
-        Console.WriteLine("  --no-validation, -nv  Disable OpenAPI specification validation rules");
+        Console.WriteLine("  --help, -h              Show this help message and exit");
+        Console.WriteLine("  --no-validation, -nv    Disable OpenAPI specification validation rules");
+        Console.WriteLine("  --third-party-notices   Print third-party software notices and exit");
         Console.WriteLine();
         Console.WriteLine("Examples:");
         Console.WriteLine("  OpenAPIDyalog openapispec.json");

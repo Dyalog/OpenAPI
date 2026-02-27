@@ -1,5 +1,4 @@
 :Namespace utils
-    ⍝ Generated on {{ generated_at | date.to_string "%Y-%m-%d %H:%M:%S" }} UTC
     ⍝ {{ title }} - Version {{ version }}
     ⍝ Utility functions for HTTP requests and parameter validation
 
@@ -98,12 +97,12 @@
 
     ∇
 
-    isValidPathParam←{
+      isValidPathParam←{
         ⍝ True if argument is a character vector or a scalar number
-        isChar←(0=10|⎕DR)⍵
+        isChar←(1=≢⍴1∘/⍵)∧(0=10|⎕DR)⍵
         isScalarNum←(0=≢⍴⍵)∧2|⎕DR ⍵
-        isChar ∨ isScalarNum
-    }
+        isChar∨isScalarNum
+      }
 
     base64←{⎕IO ⎕ML←0 1             ⍝ Base64 encoding and decoding as used in MIME.
 

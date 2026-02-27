@@ -71,7 +71,7 @@ public class TemplateService : ITemplateService
         try
         {
             var scriptObject = BuildScriptObject(context);
-            var templateContext = new TemplateContext();
+            var templateContext = new TemplateContext { LoopLimit = int.MaxValue };
             templateContext.PushGlobal(scriptObject);
             return template.Render(templateContext);
         }
@@ -89,7 +89,7 @@ public class TemplateService : ITemplateService
         try
         {
             var scriptObject = BuildScriptObject(context);
-            var templateContext = new TemplateContext();
+            var templateContext = new TemplateContext { LoopLimit = int.MaxValue };
             templateContext.PushGlobal(scriptObject);
             return await template.RenderAsync(templateContext);
         }
@@ -109,7 +109,7 @@ public class TemplateService : ITemplateService
     }
 
     /// <summary>
-    /// Saves rendered output to a file.
+    /// Saves rendered output to a file, skipping the write if the existing content is identical.
     /// </summary>
     public async Task SaveOutputAsync(string output, string outputPath)
     {
@@ -118,6 +118,9 @@ public class TemplateService : ITemplateService
         {
             Directory.CreateDirectory(directory);
         }
+
+        if (File.Exists(outputPath) && await File.ReadAllTextAsync(outputPath) == output)
+            return;
 
         await File.WriteAllTextAsync(outputPath, output);
     }

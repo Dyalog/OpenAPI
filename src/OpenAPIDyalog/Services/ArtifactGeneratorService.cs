@@ -51,22 +51,36 @@ public class ArtifactGeneratorService
     }
 
     /// <summary>
-    /// Copies the embedded HttpCommand.aplc binary resource to the output directory.
+    /// Copies the embedded HttpCommand.aplc binary resource to the output directory,
+    /// skipping the write if the existing file is already identical.
     /// </summary>
     public async Task CopyHttpCommandAsync(string outputDirectory)
     {
         var destPath = Path.Combine(outputDirectory, GeneratorConstants.AplSourceDir, "HttpCommand.aplc");
         Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
 
-        using var srcStream  = _templateService.GetEmbeddedResourceStream(GeneratorConstants.HttpCommandResource);
-        using var destStream = File.Create(destPath);
-        await srcStream.CopyToAsync(destStream);
+        using var srcStream = _templateService.GetEmbeddedResourceStream(GeneratorConstants.HttpCommandResource);
+        using var memStream = new MemoryStream();
+        await srcStream.CopyToAsync(memStream);
+        var srcBytes = memStream.ToArray();
 
+        if (File.Exists(destPath))
+        {
+            var destBytes = await File.ReadAllBytesAsync(destPath);
+            if (srcBytes.SequenceEqual(destBytes))
+            {
+                _logger.LogInformation("Unchanged: {AplSourceDir}/HttpCommand.aplc", GeneratorConstants.AplSourceDir);
+                return;
+            }
+        }
+
+        await File.WriteAllBytesAsync(destPath, srcBytes);
         _logger.LogInformation("Copied: {AplSourceDir}/HttpCommand.aplc", GeneratorConstants.AplSourceDir);
     }
 
     /// <summary>
-    /// Copies the OpenAPI specification file to the output directory.
+    /// Copies the OpenAPI specification file to the output directory,
+    /// skipping the write if the existing file is already identical.
     /// </summary>
     /// <exception cref="IOException">Re-thrown after logging if the copy fails.</exception>
     public async Task CopySpecificationAsync(string sourcePath, string outputDirectory)
@@ -76,9 +90,20 @@ public class ArtifactGeneratorService
 
         try
         {
-            File.Copy(sourcePath, destPath, overwrite: true);
+            var srcBytes = await File.ReadAllBytesAsync(sourcePath);
+
+            if (File.Exists(destPath))
+            {
+                var destBytes = await File.ReadAllBytesAsync(destPath);
+                if (srcBytes.SequenceEqual(destBytes))
+                {
+                    _logger.LogInformation("Unchanged: {FileName}", fileName);
+                    return;
+                }
+            }
+
+            await File.WriteAllBytesAsync(destPath, srcBytes);
             _logger.LogInformation("Copied: {FileName}", fileName);
-            await Task.CompletedTask; // async for consistent caller pattern
         }
         catch (Exception ex)
         {
