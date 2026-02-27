@@ -1,56 +1,31 @@
 # Dyalog APL OpenAPI Client Generator
 
-A C# application for parsing OpenAPI specifications and generating Dyalog APL client code.
+Generates Dyalog APL client code from OpenAPI 3.0 specifications.
 
-**This project is in active development and is not yet fully functional. Many features remain unimplemented.**
+[![Release](https://github.com/Dyalog/OpenAPI/actions/workflows/release.yml/badge.svg)](https://github.com/Dyalog/OpenAPI/releases/latest)
 
-## Project Structure
+> **This project is in active development and may not yet be fully functional with the entirety of the OpenAPI specification. Please raise a GitHub issue for any discovered bugs or feature requests.**
+
+## Documentation
+
+Full documentation is available at **[dyalog.github.io/OpenAPI](https://dyalog.github.io/OpenAPI)**, including installation, CLI reference, and a guide to the generated client.
+
+## Quick Start
+
+1. Download the binary for your platform from the [GitHub Releases page](https://github.com/Dyalog/OpenAPI/releases/latest).
+2. Run the generator against your spec:
 
 ```
-OpenAPIDyalog/
-├── Program.cs                    # Application entry point
-├── Services/                     # Business logic layer
-│   ├── OpenApiService.cs         # OpenAPI parsing and processing
-│   ├── CodeGeneratorService.cs   # Code generation orchestration
-│   └── TemplateService.cs        # Template rendering
-├── Models/                       # Data models and DTOs
-│   ├── GeneratorOptions.cs       # Configuration options
-│   ├── OpenApiParseResult.cs     # Parsing results
-│   └── TemplateContext.cs        # Template data context
-├── Templates/                    # Scriban templates for code generation
-│   ├── Client.aplc.scriban       # Main client class template
-│   └── api/endpoint.apln.scriban # API endpoint template
-└── Utils/                        # Utility classes and helpers
+openapidyalog path/to/openapi.yaml ./output
 ```
 
-## Building and Running
+See [Installation](https://dyalog.github.io/OpenAPI/installation/) for platform-specific setup details.
 
-### Build
-```bash
-dotnet build
-```
+## Requirements
 
-### Run
-```bash
-dotnet run -- <path-to-openapi-spec> [output-directory]
-```
+- Dyalog APL v20.0 or later (to use the generated client)
+- An OpenAPI 3.0 specification file (JSON or YAML)
 
-### Example
-```bash
-dotnet run -- ../pet-store/openapi.json ./output
-```
+## Contributing
 
-## Next Steps
-
-- Test Implementation with [PetStore](https://petstore3.swagger.io/)
-- Investigate what other features are required
-- Validate models
-- Add comprehensive error handling
-- Add support for authentication schemes
-- Create test suite
-
-## Notes
-
-This project will leverage Dyalog v20.0 features. Generated libraries will not support pre-v20.0 versions of Dyalog APL.  
-
-For now, only JSON data is supported for sending data TO the server. 
+Developer documentation — architecture, build setup, templates, and contribution workflow — is in [dev-docs/](dev-docs/).
