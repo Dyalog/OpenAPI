@@ -37,7 +37,11 @@ nav:
     - Operation Functions: generated-client/operations.md
     - Using the Client: generated-client/using-the-client.md
     - Error Handling: generated-client/error-handling.md
-  - Examples: examples/index.md
+  - Examples:
+    - Overview: examples/index.md
+    - Petstore: examples/petstore.md
+    - Authentication: examples/authentication.md
+    - Debugging: examples/debugging.md
 
 markdown_extensions:
   - admonition
